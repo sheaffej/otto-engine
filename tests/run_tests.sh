@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYTEST="pytest -vs"
+PYTEST="pytest -v"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..

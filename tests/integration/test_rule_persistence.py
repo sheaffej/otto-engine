@@ -32,7 +32,7 @@ class TestOttoEngineIntegration(unittest.TestCase):
                     {
                         "platform": "numeric_state",
                         "entity_id": "input_slider.temp_slider",
-                        "above": 80
+                        "above_value": 80
                     },
                     {
                         "platform": "event",
@@ -89,7 +89,7 @@ class TestOttoEngineIntegration(unittest.TestCase):
                         },
                         "action_sequence": [
                             {
-                                "delay": {"days": 0, "secs": 3, "ms": 0}
+                                "delay": "00:00:03"
                             },
                             {
                                 "domain": "input_boolean",
@@ -133,14 +133,15 @@ class TestOttoEngineIntegration(unittest.TestCase):
         # PUT good rule /rest/rule with ID 1234
         resp = requests.put(RESTURL + "/rest/rule", json=self.rule12345).json()
         print(resp)
-        self.assertEqual(resp.get("success"), False)
+        self.assertEqual(resp.get("success"), True)
         self.assertEqual(resp.get("id"), "12345")
 
     def test_4_put_rule_wrong_id(self):
         # Re-PUT good rule with wrong ID /rest/rule/4545
+        # This should succeed, and return the right rule ID (12345)
         resp = requests.put(RESTURL + "/rest/rule/4545", json=self.rule12345).json()
         print(resp)
-        self.assertEqual(resp.get("success"), False)
+        self.assertEqual(resp.get("success"), True)
         self.assertEqual(resp.get("id"), "12345")
 
     def test_5_get_good_rule(self):
