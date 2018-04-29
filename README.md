@@ -1,8 +1,8 @@
 # `otto-engine`
 
-An automation engine for Home Assistant.
+An automation engine for [Home Assistant](https://www.home-assistant.io/).
 
-This is a general purpose automation engine that integrates with Home Assistant, and provides higher fidelity automation rules and flexibility than Home Assistant's built-in automation capability.
+This is a general purpose automation engine that integrates with [Home Assistant](https://www.home-assistant.io/), and provides higher fidelity automation rules and flexibility than Home Assistant's built-in automation capability.
 
 Otto-engine communicates with Home Assistant over the [Web Socket API](https://developers.home-assistant.io/docs/en/external_api_websocket.html). 
 
