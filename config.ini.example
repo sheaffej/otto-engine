@@ -7,3 +7,4 @@ HASS_SSL = no
 TZ = America/Los_Angeles
 JSON_RULES_DIR = ../json_rules
 LOG_LEVEL = INFO
+TEST_WEBSOCKET_PORT = 8000

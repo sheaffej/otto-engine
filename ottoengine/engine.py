@@ -7,7 +7,7 @@ import sys
 import traceback
 # import typing
 
-from ottoengine import clock, state, fibers, hass_websocket, dataobjects, const, persistence
+from ottoengine import clock, state, fibers, hass_websocket, dataobjects, const, persistence, test_websocket, config
 
 ASYNC_TIMEOUT_SECS = 5
 
@@ -65,6 +65,11 @@ class OttoEngine(object):
     #############################
 
     async def _async_setup_engine(self):
+
+        # Start testing Websocket server
+        if config.TEST_WEBSOCKET_PORT:
+            _LOG.info("Starting testing websocket server")
+            self._run_fiber(test_websocket.TestWebsocketServer(config.TEST_WEBSOCKET_PORT))
 
         # Initialize the websocket
         self._websocket = hass_websocket.AsyncHassWebsocket(

@@ -8,7 +8,7 @@ from concurrent.futures import CancelledError
 from ottoengine import hass_websocket, dataobjects, const
 
 _LOG = logging.getLogger(__name__)
-# _LOG.setLevel(logging.DEBUG)
+_LOG.setLevel(logging.DEBUG)
 
 
 class Fiber(object):
@@ -18,6 +18,7 @@ class Fiber(object):
         self._name = type(self).__name__
 
     async def async_run(self):
+        _LOG.info("Fiber {} starting".format(type(self).__name__))
         try:
             await self._async_run()
         except (CancelledError, RuntimeError) as e:
@@ -53,7 +54,7 @@ class FiberWebsocketReader(Fiber):
 
 
     async def _async_run(self):
-        _LOG.info("{} starting".format(type(self).__name__))
+        # _LOG.info("{} starting".format(type(self).__name__))
 
         # while self._running:
 
@@ -118,10 +119,14 @@ class FiberWebsocketReader(Fiber):
                 raise Exception(message)
 
             _LOG.debug("Websocket read: {}".format(raw_msg))
-            msg = json.loads(raw_msg)
+            try:
+                msg = json.loads(raw_msg)
+            except json.JSONDecodeError as e:
+                _LOG.error("Websocket message failed to parse as JSON: {}".format(raw_msg))
+                continue
 
             if "type" not in msg:
-                _LOG.warning("Unknown response recieved on websocket:  {}".format(raw_msg))
+                _LOG.warning("Unknown response recieved on websocket: {}".format(raw_msg))
                 continue
             response_type = msg["type"]
 
