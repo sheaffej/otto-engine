@@ -5,10 +5,10 @@ import unittest
 RESTURL = "http://localhost:5000"
 
 
-class TestOttoEngineIntegration(unittest.TestCase):
+class TestRulePersistence(unittest.TestCase):
 
     def __init__(self, *args):
-        super(TestOttoEngineIntegration, self).__init__(*args)
+        super(TestRulePersistence, self).__init__(*args)
 
         self.rule12345 = {
             "data": {
