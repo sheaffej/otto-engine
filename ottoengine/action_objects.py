@@ -38,7 +38,7 @@ class ServiceAction(RuleActionItem):
     #   entity_id: group.bedroom
     #   brightness: 100
 
-    def __init__(self, domain, service, entity_id=None, data_dict=None):
+    def __init__(self, domain, service, entity_id=None, data_dict={}):
         self._domain = domain
         self._service = service         # string
         self._data_dict = data_dict     # {} dictionary

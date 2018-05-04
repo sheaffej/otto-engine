@@ -4,7 +4,10 @@ import pytz
 import croniter
 import logging
 
-from ottoengine import config, fibers
+# from ottoengine import config, fibers
+from ottoengine import fibers
+
+#TODO: Need to fix the config import so we have a default TZ in the TimeSpec constructor
 
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
@@ -32,8 +35,8 @@ class TimeSpec(object):
         self._month = month
         self._weekdays = weekdays      # 0-6 is Sun to Sat; or 1-7 is Mon to Sun
         self._tz_name = tz_name
-        if tz_name is None:
-            self._tz_name = config.TZ
+        # if tz_name is None:
+        #     self._tz_name = config.TZ
         
 
     def _create_cron_spec(self):

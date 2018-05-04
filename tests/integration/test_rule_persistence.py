@@ -15,7 +15,7 @@ class TestRulePersistence(unittest.TestCase):
                 "id": "12345",
                 "description": "Turn everything on after a 3 second delay if both triggered",
                 "enabled": True,
-                "group": "Test",
+                "group": "Testing",
                 "triggers": [
                     {
                         "platform": "state",

@@ -2,15 +2,23 @@
 
 import asyncio
 import asyncws
-import datetime
-import requests
 import json
 import unittest
+
+from ottoengine.testing.rules import AutomationRuleSpec
+from ottoengine.trigger_objects import StateTrigger, NumericStateTrigger
+from ottoengine.action_objects import ServiceAction
+from ottoengine.rule_objects import RuleAction
+from ottoengine.testing import websocket_helpers, restapi_helpers
+
 
 WSHOST = "localhost"
 WSPORT = 8000
 RESTHOST = "localhost"
 RESTPORT = 5000
+
+RULEGROUP = "Testing"
+RULE_DESCRIPTION = "Test Rule"
 
 WSURL = "ws://{}:{}".format(WSHOST, WSPORT)
 RESTURL = "http://{}:{}".format(RESTHOST, RESTPORT)
@@ -20,112 +28,106 @@ class TestTriggers(unittest.TestCase):
 
     def setUp(self):
         print()
+        self.act_domain = "input_boolean"
+        self.act_entity_id = "input_boolean.action_light"
+        self.act_service = "turn_on"
+        self.action = ServiceAction(
+            self.act_domain, self.act_service, entity_id=self.act_entity_id)
 
     def tearDown(self):
         pass
 
-    def test_state_changed(self):
+    def _basic_rule_helper(self, rule_id, trigger):
+        """
+            :rtype: AutomationRuleSpec
+        """
+        rulespec = AutomationRuleSpec(rule_id, RULEGROUP, description=RULE_DESCRIPTION)
+        rulespec.add_trigger(trigger)
+        action = RuleAction()
+        action.action_sequence.append(self.action)
+        rulespec.add_action(action)
+        print("Rule spec: {}".format(rulespec.serialize()))
+        return rulespec
+
+    def _check_action_helper(self, response):
+        """
+            :param str response: The JSON string response from the websocket
+            :rtype: None
+        """
+        resp = json.loads(response)
+        print("Event response: {}".format(resp))
+        self.assertEqual(resp.get("type"), "call_service")
+        self.assertEqual(resp.get("domain"), "input_boolean")
+        self.assertEqual(resp.get("service"), self.act_service)
+        self.assertEqual(resp.get("service_data").get("entity_id"), self.act_entity_id)
+
+    def test_state_changed_trigger(self):
         async def _state_changed():
 
-            # Register the rule
+            # Build the rule
             rule_id = "12345"
-
-            # Trigger
             trig_entity_id = "input_boolean.test"
             trig_old_state = "off"
             trig_new_state = "on"
 
-            # Action
-            act_entity_id = "input_boolean.action_light"
-            act_service = "turn_on"
-            rule = {
-                "data": {
-                    "id": rule_id,
-                    "description": "Test Rule",
-                    "enabled": True,
-                    "group": "Testing",
-                    "triggers": [
-                        {
-                            "platform": "state",
-                            "entity_id": trig_entity_id,
-                            "to": trig_new_state,
-                            "from": trig_old_state
-                        },
-                    ],
-                    "actions": [
-                        {
-                            "action_sequence": [
-                                {
-                                    "domain": "input_boolean",
-                                    "service": act_service,
-                                    "data": {
-                                        "entity_id": act_entity_id
-                                    }
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
+            trigger = StateTrigger(trig_entity_id, to_state="on", from_state="off")
+            rulespec = self._basic_rule_helper(rule_id, trigger)
 
-            resp = requests.put(RESTURL + "/rest/rule", json=rule).json()
-            print(resp)
-            self.assertEqual(resp.get("success"), True)
-            self.assertEqual(resp.get("id"), rule_id)
+            # Send the rule
+            restapi_helpers.put_rule(self, RESTURL, rulespec)
+            restapi_helpers.reload_rules(self, RESTURL)
 
-            resp = requests.get(RESTURL + "/rest/reload").json()
-            print(resp)
-            self.assertEqual(resp.get("success"), True)
-
+            # Send the event
             websocket = await asyncws.connect(WSURL)
-
-            now = datetime.datetime.now()
-            event = {
-                "id": 1,
-                "type": "event",
-                "event": {
-                    "event_type": "state_changed",
-                    "data": {
-                        "entity_id": trig_entity_id,
-                        "old_state": {
-                            "entity_id": trig_entity_id,
-                            "state": trig_old_state,
-                            "attributes": {},
-                            "last_changed": (now - datetime.timedelta(minutes=15)).isoformat(),
-                            "last_updated": (now - datetime.timedelta(minutes=15)).isoformat()
-                        },
-                        "new_state": {
-                            "entity_id": trig_entity_id,
-                            "state": trig_new_state,
-                            "attributes": {},
-                            "last_changed": now.isoformat(),
-                            "last_updated": now.isoformat()
-                        }
-                    },
-                    "origin": "LOCAL",
-                    "time_fired": now.isoformat()
-                }
-            }
+            event = websocket_helpers.event_state_changed(
+                1, trig_entity_id, trig_old_state, trig_new_state)
             await websocket.send(json.dumps(event))
 
-            resp = await websocket.recv()
-            resp = json.loads(resp)
-            print(resp)
+            # Check the resulting action
+            response = await websocket.recv()
+            self._check_action_helper(response)
 
-            self.assertEqual(resp.get("type"), "call_service")
-            self.assertEqual(resp.get("domain"), "input_boolean")
-            self.assertEqual(resp.get("service"), act_service)
-            self.assertEqual(resp.get("service_data").get("entity_id"), act_entity_id)
-
+            # Clean up
             await websocket.close()
-
-            resp = requests.delete(RESTURL + "/rest/rule/{}".format(rule_id)).json()
-            print(resp)
-            self.assertEqual(resp.get("success"), True)
-            self.assertEqual(resp.get("id"), rule_id)
+            restapi_helpers.delete_rule(self, RESTURL, rule_id)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_state_changed())
+
+    def test_numeric_state_trigger(self):
+        async def _numeric_state():
+            # Build the rule
+            rule_id = "12345"
+
+            trig_entity_id = "input_boolean.test"
+            trig_above_val = 1
+            trig_below_val = 10
+            event_old_val = 0
+            event_new_val = 5
+
+            trigger = NumericStateTrigger(
+                    trig_entity_id, above_value=trig_above_val, below_value=trig_below_val)
+            rulespec = self._basic_rule_helper(rule_id, trigger)
+
+            # Send the rule
+            restapi_helpers.put_rule(self, RESTURL, rulespec)
+            restapi_helpers.reload_rules(self, RESTURL)
+
+            # Send the event
+            websocket = await asyncws.connect(WSURL)
+            event = websocket_helpers.event_state_changed(
+                1, trig_entity_id, event_old_val, event_new_val)
+            await websocket.send(json.dumps(event))
+
+            response = await websocket.recv()
+            self._check_action_helper(response)
+
+            # Clean up
+            await websocket.close()
+            restapi_helpers.delete_rule(self, RESTURL, rule_id)
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(_numeric_state())
 
 
 if __name__ == "__main__":

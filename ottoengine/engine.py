@@ -9,6 +9,7 @@ import traceback
 
 from ottoengine import clock, state, fibers, hass_websocket, dataobjects, const, persistence, test_websocket, config
 
+
 ASYNC_TIMEOUT_SECS = 5
 
 _LOG = logging.getLogger(__name__)
