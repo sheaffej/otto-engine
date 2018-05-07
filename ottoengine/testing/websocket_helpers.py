@@ -30,3 +30,18 @@ def event_state_changed(id, entity_id, old_state, new_state):
         }
     }
     return event
+
+
+def event_hass_event(id, event_type, event_data):
+    now = datetime.datetime.now()
+    event = {
+        "id": id,
+        "type": "event",
+        "event": {
+            "event_type": event_type,
+            "data": event_data,
+            "origin": "LOCAL",
+            "time_fired": now.isoformat()
+        }
+    }
+    return event

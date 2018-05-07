@@ -1,0 +1,42 @@
+{
+  "id": "243956",
+  "description": "No Motion (occupied, on) turns off Kitchen light",
+  "enabled": true,
+  "group": "Lights",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "state",
+      "entity_id": "input_boolean.motion_in_kitchen",
+      "to": "off"
+    }
+  ],
+  "rule_condition": {
+    "condition": "and",
+    "conditions": [
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.home_is_occupied",
+        "state": "on"
+      },
+      {
+        "condition": "state",
+        "entity_id": "switch.ge_12722_onoff_relay_switch_switch_4_0",
+        "state": "on"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "action_sequence": [
+        {
+          "domain": "switch",
+          "service": "turn_off",
+          "data": {
+            "entity_id": "switch.ge_12722_onoff_relay_switch_switch_4_0"
+          }
+        }
+      ]
+    }
+  ]
+}

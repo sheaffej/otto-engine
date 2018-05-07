@@ -4,10 +4,7 @@ import pytz
 import croniter
 import logging
 
-# from ottoengine import config, fibers
 from ottoengine import fibers
-
-#TODO: Need to fix the config import so we have a default TZ in the TimeSpec constructor
 
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
@@ -26,7 +23,7 @@ def utcnow():
 
 class TimeSpec(object):
 
-    def __init__(self, minute=None, hour=None, day_of_month=None, month=None, weekdays=None, tz_name=None):
+    def __init__(self, tz_name:str, minute=None, hour=None, day_of_month=None, month=None, weekdays=None):
 
         # This object follows cron syntax:  https://en.wikipedia.org/wiki/Cron
         self._minute = minute
@@ -119,7 +116,7 @@ class TimeSpec(object):
             day_of_month = o.get("day_of_month"),
             month = o.get("month"),
             weekdays = o.get("weekdays"),
-            tz_name = o.get("tz", config.TZ)
+            tz_name = o.get("tz", self._tz_name)
         )
 
 # class TimeSpec
@@ -167,8 +164,9 @@ class AlarmTimeSpecAction(AlarmAction):
 
 class EngineClock (fibers.Fiber):
 
-    def __init__(self, loop=None):
+    def __init__(self, tz_name: str, loop=None):
         super().__init__()
+        self._tz_name = tz_name
         self._loop = loop
         self._timeline = []     # list of ClockAlarms; one for each time at which to do something
 
@@ -274,7 +272,7 @@ class EngineClock (fibers.Fiber):
     def _format_timeline(self) -> str:
         p = "Printing clock alarm timeline..."
         for alarm in self._timeline:
-            p += "\nAlarm: {}".format(alarm.alarm_time.astimezone(pytz.timezone(config.TZ)))
+            p += "\nAlarm: {}".format(alarm.alarm_time.astimezone(pytz.timezone(self._tz_name)))
             for i, action in enumerate(alarm.actions):
                 if isinstance(action, AlarmTimeSpecAction):
                     p += "\n   Action {}: {}".format(i, action.id)

@@ -1,0 +1,17 @@
+{
+  "id": "3423062",
+  "description": "Living Room Timer ended",
+  "enabled": true,
+  "group": "Test",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "event",
+      "event_type": "timer_ended",
+      "event_data": {
+        "timer": "living_room_light"
+      }
+    }
+  ],
+  "actions": []
+}

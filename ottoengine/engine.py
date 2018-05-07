@@ -7,7 +7,10 @@ import sys
 import traceback
 # import typing
 
-from ottoengine import clock, state, fibers, hass_websocket, dataobjects, const, persistence, test_websocket, config
+from ottoengine import (
+    clock, state, fibers, hass_websocket,
+    dataobjects, const, persistence, test_websocket, config
+)
 
 
 ASYNC_TIMEOUT_SECS = 5
@@ -18,15 +21,17 @@ _LOG.setLevel(logging.DEBUG)
 
 class OttoEngine(object):
 
-    def __init__(self, hass_host, hass_port, hass_password, hass_ssl):
-        self._hass_host = hass_host
-        self._hass_port = hass_port
-        self._hass_password = hass_password
-        self._hass_ssl = hass_ssl
+    def __init__(self, config: config.EngineConfig):
+        self._config = config
+        self._hass_host = config.hass_host
+        self._hass_port = config.hass_port
+        self._hass_password = config.hass_password
+        self._hass_ssl = config.hass_ssl
         # self._tzinfo = tzinfo
 
         self._loop = asyncio.get_event_loop()
         self._states = state.OttoEngineState()
+        self._persistence_mgr = persistence.PersistenceManager(self, self._config.json_rules_dir)
 
         self._websocket = None
         self._fiber_websocket_reader = None
@@ -68,9 +73,9 @@ class OttoEngine(object):
     async def _async_setup_engine(self):
 
         # Start testing Websocket server
-        if config.TEST_WEBSOCKET_PORT:
+        if self._config.test_websocket_port:
             _LOG.info("Starting testing websocket server")
-            self._run_fiber(test_websocket.TestWebsocketServer(config.TEST_WEBSOCKET_PORT))
+            self._run_fiber(test_websocket.TestWebsocketServer(self._config.test_websocket_port))
 
         # Initialize the websocket
         self._websocket = hass_websocket.AsyncHassWebsocket(
@@ -93,7 +98,7 @@ class OttoEngine(object):
         await self._websocket.async_get_all_services()
 
         # Start the EngineClock
-        self._clock = clock.EngineClock(self._loop)
+        self._clock = clock.EngineClock(self._config.tz, loop=self._loop)
         self._run_fiber(self._clock)
 
         # Load the Automation Rules
@@ -102,9 +107,10 @@ class OttoEngine(object):
 
     async def _async_load_rules(self):
         _LOG.info("Loading rules from persistence")
-        persistence.engine = self
+        # persistence.engine = self
+        # persist_mgr = persistence.PersistenceManager(self, self._config.json_rules_dir)
 
-        rules = persistence.get_rules()
+        rules = self._persistence_mgr.get_rules(self._config.json_rules_dir)
         for rule in rules:
 
             # Add State Listeners
@@ -238,7 +244,6 @@ class OttoEngine(object):
             _LOG.debug(
                 "[Event] event_type: {}, event_data: {}".format(event.event_type, event.data_obj))
 
-            # _LOG.warn("engine.process_event not implemented for event type: {}".format(event.event_type))
             listeners = self._event_listeners.get(event.event_type)
             if listeners is not None:
                 for listener in listeners:
@@ -293,13 +298,13 @@ class OttoEngine(object):
             Returns { success: True } if successful,
             or { success: False, message: message } if unsuccessful.
             '''
-            result = persistence.rule_from_dict(rule_dict)
+            result = self._persistence_mgr.rule_from_dict(rule_dict)
             if not result.get("success"):
                 return result
 
             rule = result.get("rule")
             try:
-                persistence.save_rule(rule)
+                self._persistence_mgr.save_rule(rule)
             except Exception as e:
                 message = "Exception saving rule: {}: {}".format(
                     sys.exc_info()[0], sys.exc_info()[1])
@@ -315,7 +320,7 @@ class OttoEngine(object):
 
     def delete_rule(self, rule_id) -> bool:
         async def _async_delete_rule(rule_id):
-            return persistence.delete_rule(rule_id)
+            return self._persistence_mgr.delete_rule(rule_id)
         return asyncio.run_coroutine_threadsafe(
             _async_delete_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
 

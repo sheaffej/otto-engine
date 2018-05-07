@@ -178,6 +178,7 @@ class NumericStateTrigger(RuleTrigger):
                             run = True
         return run
 
+
 class EventTrigger(RuleTrigger):
     # Mandatory
     # platform: event
@@ -190,15 +191,13 @@ class EventTrigger(RuleTrigger):
         super().__init__("event")
         self._event_type = event_type     # string
         self._event_data_obj = event_data_obj
-        
+
         if self._event_data_obj is None:
             self._event_data_obj = {}
-
 
     @property
     def event_type(self):
         return self._event_type
-
 
     @staticmethod
     def from_dict(json):
@@ -214,7 +213,7 @@ class EventTrigger(RuleTrigger):
         }
         return d
 
-    def eval_trigger(self, event_obj:dataobjects.HassEvent) -> bool:
+    def eval_trigger(self, event_obj: dataobjects.HassEvent) -> bool:
 
         if event_obj.event_type != self._event_type:
             return False

@@ -1,0 +1,24 @@
+{
+  "id": "1112",
+  "description": "Time Trigger Test 2: every 2 minutes; no TZ specified",
+  "enabled": false,
+  "group": "Test",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "time",
+      "minute": "*/2",
+      "tz": "America/Los_Angeles"
+    }
+  ],
+  "actions": [
+    {
+      "description": null,
+      "action_sequence": [
+        {
+          "log_message": "Time Trigger Test 2 (every 2 minute; no TZ) executed"
+        }
+      ]
+    }
+  ]
+}

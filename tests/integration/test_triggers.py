@@ -5,8 +5,8 @@ import asyncws
 import json
 import unittest
 
-from ottoengine.testing.rules import AutomationRuleSpec
-from ottoengine.trigger_objects import StateTrigger, NumericStateTrigger
+from ottoengine.testing.rule_helpers import AutomationRuleSpec
+from ottoengine.trigger_objects import StateTrigger, NumericStateTrigger, EventTrigger
 from ottoengine.action_objects import ServiceAction
 from ottoengine.rule_objects import RuleAction
 from ottoengine.testing import websocket_helpers, restapi_helpers
@@ -129,6 +129,42 @@ class TestTriggers(unittest.TestCase):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_numeric_state())
 
+    def test_event_trigger(self):
+        async def _event():
+            # Build the rule
+            rule_id = "12345"
+
+            trig_event_type = "timer_ended"
+            trig_event_data = {"timer": "main_light"}
+
+            trigger = EventTrigger(trig_event_type, trig_event_data)
+            rulespec = self._basic_rule_helper(rule_id, trigger)
+
+            # Send the rule
+            restapi_helpers.put_rule(self, RESTURL, rulespec)
+            restapi_helpers.reload_rules(self, RESTURL)
+
+            # Send the event
+            websocket = await asyncws.connect(WSURL)
+            event = websocket_helpers.event_hass_event(rule_id, trig_event_type, trig_event_data)
+            await websocket.send(json.dumps(event))
+
+            response = await websocket.recv()
+            self._check_action_helper(response)
+
+            # Clean up
+            await websocket.close()
+            restapi_helpers.delete_rule(self, RESTURL, rule_id)
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(_event())
+
+    # Note: TimeTrigger is tested differently as it's triggered by the EngineClock and not by
+    # Home Assistant events.
+
+    # This test also tests the ServiceAction, which is the only Action that integrates with
+    # Home Assistant. The remaining actions: LogAction, DelayAction, ConditionAction all
+    # stay within the Otto Engine.
 
 if __name__ == "__main__":
     unittest.main()

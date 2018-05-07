@@ -1,0 +1,34 @@
+{
+  "id": "243032",
+  "description": "Bright () turns off Living Room light",
+  "enabled": true,
+  "group": "Lights",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "state",
+      "entity_id": "input_boolean.dark_in_living_room",
+      "to": "off"
+    }
+  ],
+  "actions": [
+    {
+      "action_sequence": [
+        {
+          "domain": "script",
+          "service": "turn_off",
+          "data": {
+            "entity_id": "script.timer_living_room_light_off"
+          }
+        },
+        {
+          "domain": "switch",
+          "service": "turn_off",
+          "data": {
+            "entity_id": "switch.leviton_dzpa11lw_plugin_appliance_module_switch_2_0"
+          }
+        }
+      ]
+    }
+  ]
+}

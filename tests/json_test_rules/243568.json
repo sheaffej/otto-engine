@@ -1,0 +1,49 @@
+{
+  "id": "243568",
+  "description": "Motion in KTN (Occupied & Dark) turns on Kitchen light",
+  "enabled": true,
+  "group": "Lights",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "state",
+      "entity_id": "input_boolean.motion_in_kitchen",
+      "to": "on"
+    }
+  ],
+  "rule_condition": {
+    "condition": "and",
+    "conditions": [
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.home_is_occupied",
+        "state": "on"
+      },
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.dark_in_kitchen",
+        "state": "on"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "action_sequence": [
+        {
+          "domain": "script",
+          "service": "turn_off",
+          "data": {
+            "entity_id": "script.timer_kitchen_light_off"
+          }
+        },
+        {
+          "domain": "switch",
+          "service": "turn_on",
+          "data": {
+            "entity_id": "switch.ge_12722_onoff_relay_switch_switch_4_0"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -4,18 +4,19 @@ import logging
 import urllib.request
 import sys
 
-from ottoengine import engine, restapi
+from ottoengine import engine, restapi, config
 
 # Load the config
 try:
-    from ottoengine import config
+    config = config.EngineConfig()
 except Exception:
     print("Error encountered loading configuration file")
     sys.exit(1)
 
+
 # Setup the logging
 _LOG = logging.getLogger("run_otto")
-logging.basicConfig(level=config.LOG_LEVEL)
+logging.basicConfig(level=config.log_level)
 fmt = ("%(levelname)s [%(name)s - %(funcName)s()] %(message)s")
 colorfmt = "%(log_color)s{}%(reset)s".format(fmt)
 # datefmt = '%y-%m-%d %H:%M:%S'
@@ -43,13 +44,9 @@ except ImportError:
     print("Failed to import colorlog module")
     sys.exit(1)
 
+
 # Initialize the engine
-engine = engine.OttoEngine(
-    config.HASS_HOST,
-    config.HASS_PORT,
-    config.HASS_PASSWORD,
-    config.HASS_SSL
-)
+engine = engine.OttoEngine(config)
 # persistence.JSON_RULES_DIR = config.JSON_RULES_DIR
 
 # Start the Flask web server
@@ -63,4 +60,4 @@ engine.start_engine()
 
 
 # Shutdown the webui
-urllib.request.urlopen("http://localhost:{}/shutdown".format(config.OTTO_REST_PORT))
+urllib.request.urlopen("http://localhost:{}/shutdown".format(config.rest_port))

@@ -1,0 +1,24 @@
+{
+  "id": "1113",
+  "description": "Time Trigger Test 3: every 3 minutes, UTC",
+  "enabled": false,
+  "group": "Test",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "time",
+      "minute": "*/3",
+      "tz": "UTC"
+    }
+  ],
+  "actions": [
+    {
+      "description": null,
+      "action_sequence": [
+        {
+          "log_message": "Time Trigger Test 3 (every 3 minute, UTC) executed"
+        }
+      ]
+    }
+  ]
+}

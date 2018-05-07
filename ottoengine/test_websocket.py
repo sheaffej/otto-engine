@@ -52,6 +52,9 @@ class TestWebsocketServer(Fiber):
                             continue
                         await client.send(frame)
 
+        except RuntimeError as e:
+            _LOG.warn(str(e))
+
         finally:
             with (await self._clients_lock):
                 self._clients.remove(websocket)

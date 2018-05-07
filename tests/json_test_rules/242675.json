@@ -1,0 +1,47 @@
+{
+  "id": "242675",
+  "description": "No Motion (occupied & awake & on) turns off Living Room light after delay",
+  "enabled": true,
+  "group": "Lights",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "state",
+      "entity_id": "input_boolean.motion_in_living_room",
+      "to": "off"
+    }
+  ],
+  "rule_condition": {
+    "condition": "and",
+    "conditions": [
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.home_is_occupied",
+        "state": "on"
+      },
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.is_sleeping",
+        "state": "off"
+      },
+      {
+        "condition": "state",
+        "entity_id": "switch.leviton_dzpa11lw_plugin_appliance_module_switch_2_0",
+        "state": "on"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "action_sequence": [
+        {
+          "domain": "script",
+          "service": "turn_on",
+          "data": {
+            "entity_id": "script.timer_living_room_light_off"
+          }
+        }
+      ]
+    }
+  ]
+}

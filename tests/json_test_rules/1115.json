@@ -1,0 +1,26 @@
+{
+  "id": "1115",
+  "description": "Time Trigger Test 5: 18:30a Fri/Sat/Sun",
+  "enabled": false,
+  "group": "Test",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "time",
+      "minute": 30,
+      "hour": 18,
+      "weekdays": "5,6,7",
+      "tz": "America/Los_Angeles"
+    }
+  ],
+  "actions": [
+    {
+      "description": null,
+      "action_sequence": [
+        {
+          "log_message": "Time Trigger Test 5 (18:30 fri,sat,sun) executed"
+        }
+      ]
+    }
+  ]
+}

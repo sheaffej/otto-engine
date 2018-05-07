@@ -76,17 +76,17 @@ class FiberWebsocketReader(Fiber):
             # await self._websocket.async_get_all_state()
             # await self._websocket.async_get_all_services()
 
-
         try:
             await self._read()
         except Exception as e:
-            message = "Exception reading from websocket: {}".format(str(e))
-            _LOG.error(message)
-            # await self._wait_for_connection()
+            if "Event loop is closed" in str(e):
+                _LOG.warn("{}: {}".format(self.__class__, str(e)))
+            else:
+                _LOG.error("Exception reading from websocket: {}".format(str(e)))
 
         await self._socket.async_close(force=True)
         self._engine.websocket_fiber_ending()
-        
+
 
 
 

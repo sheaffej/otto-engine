@@ -1,0 +1,25 @@
+{
+  "id": "1114",
+  "description": "Time Trigger Test 4: 9:30a every day",
+  "enabled": false,
+  "group": "Test",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "time",
+      "minute": 30,
+      "hour": 9,
+      "tz": "America/Los_Angeles"
+    }
+  ],
+  "actions": [
+    {
+      "description": null,
+      "action_sequence": [
+        {
+          "log_message": "Time Trigger Test 4 (9:30a every day) executed"
+        }
+      ]
+    }
+  ]
+}

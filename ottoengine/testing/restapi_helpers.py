@@ -1,6 +1,6 @@
 import requests
 from unittest import TestCase
-from ottoengine.testing.rules import AutomationRuleSpec
+from ottoengine.testing.rule_helpers import AutomationRuleSpec
 
 
 def put_rule(testcase, rest_url, rulespec):
