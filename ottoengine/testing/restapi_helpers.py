@@ -1,19 +1,27 @@
 import requests
 from unittest import TestCase
-from ottoengine.testing.rule_helpers import AutomationRuleSpec
+# from ottoengine.testing.rule_helpers import AutomationRuleSpec
 
 
-def put_rule(testcase, rest_url, rulespec):
+def put_rule(testcase, rest_url, json_rule):
     """
         :param TestCase testcase: TestCase object
         :param str rest_url: http://host:port
-        :param AutomationRuleSpec rulespec: Rule spec object
+        :param str rulespec: JSON rule
         :rtype: dict
     """
-    resp = requests.put(rest_url + "/rest/rule", json={"data": rulespec.serialize()}).json()
+    resp = requests.put(rest_url + "/rest/rule", json={"data": json_rule}).json()
     print("Put rule response: {}".format(resp))
     testcase.assertEqual(resp.get("success"), True)
-    testcase.assertEqual(resp.get("id"), rulespec.id)
+    testcase.assertEqual(resp.get("id"), json_rule["id"])
+    return resp
+
+
+def get_rule(testcase, rest_url, rule_id):
+    resp = requests.get(rest_url + "/rest/rule/{}".format(rule_id)).json()
+    print("Get rule response: {}".format(resp))
+    testcase.assertEqual(resp.get("success"), True)
+    testcase.assertEqual(resp.get("id"), rule_id)
     return resp
 
 

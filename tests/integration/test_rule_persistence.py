@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
+import copy
+import json
+import os
 import requests
 import unittest
+
+from ottoengine.testing import restapi_helpers
 
 RESTURL = "http://localhost:5000"
 
 
 class TestRulePersistence(unittest.TestCase):
 
-    def __init__(self, *args):
-        super(TestRulePersistence, self).__init__(*args)
-
+    def setUp(self):
+        print()
         self.rule12345 = {
             "data": {
                 "id": "12345",
@@ -111,9 +115,6 @@ class TestRulePersistence(unittest.TestCase):
             }
         }
 
-    # def test_dummy(self):
-    #     self.assertEqual(1, 1)
-
     def test_1_put_bad_rule(self):
         # PUT bad rule
         data = {"data": {"name": "John", "age": 44}}
@@ -139,6 +140,7 @@ class TestRulePersistence(unittest.TestCase):
     def test_4_put_rule_wrong_id(self):
         # Re-PUT good rule with wrong ID /rest/rule/4545
         # This should succeed, and return the right rule ID (12345)
+        # This also tests updating a rule by overwritting it
         resp = requests.put(RESTURL + "/rest/rule/4545", json=self.rule12345).json()
         print(resp)
         self.assertEqual(resp.get("success"), True)
@@ -146,27 +148,67 @@ class TestRulePersistence(unittest.TestCase):
 
     def test_5_get_good_rule(self):
         # GET good rule 12345
-        # curl -X GET ${BASEURL}/rest/rule/12345
         resp = requests.get(RESTURL + "/rest/rule/12345").json()
         print(resp)
         self.assertEqual(resp.get("success"), True)
         self.assertEqual(resp.get("id"), "12345")
 
-    def test_6_delete_good_rule(self):
-        # DELETE existing rule 12345
-        # curl -X DELETE ${BASEURL}/rest/rule/12345
-        resp = requests.delete(RESTURL + "/rest/rule/12345").json()
+    def test_6_get_all_rules(self):
+        # Add another rule
+        rule54321 = copy.deepcopy(self.rule12345)
+        rule54321["data"]["id"] = "54321"
+        resp = requests.put(RESTURL + "/rest/rule", json=rule54321).json()
         print(resp)
         self.assertEqual(resp.get("success"), True)
-        self.assertEqual(resp.get("id"), "12345")
+        self.assertEqual(resp.get("id"), "54321")
+        # Get rules and make sure they are correct
+        resp = requests.get(RESTURL + "/rest/rules").json()
+        print(resp)
+        self.assertEqual(len(resp["data"]), 2)
+        for rule in resp["data"]:
+            # if "123456" in rule["id"]:
+            self.assertIn(rule["id"], ["12345", "54321"])
 
-    def test_7_delete_missing_rule(self):
+    def test_7_delete_good_rule(self):
+        # DELETE existing rule 12345
+        for rule_id in ["12345", "54321"]:
+            resp = requests.delete(RESTURL + "/rest/rule/{}".format(rule_id)).json()
+            print(resp)
+            self.assertEqual(resp.get("success"), True)
+            self.assertEqual(resp.get("id"), rule_id)
+
+    def test_8_delete_missing_rule(self):
         # DELETE missing rule 4545
         # curl -X DELETE ${BASEURL}/rest/rule/4545
         resp = requests.delete(RESTURL + "/rest/rule/4545").json()
         print(resp)
         self.assertEqual(resp.get("success"), False)
         self.assertEqual(resp.get("id"), "4545")
+
+    def test_9_load_rules_from_dir(self):
+        mydir = os.path.dirname(__file__)
+        json_test_rules_dir = os.path.join(mydir, "../json_test_rules")
+
+        for file in os.listdir(json_test_rules_dir):
+            print(file)
+
+            if file.endswith("json"):
+                filename = os.path.join(json_test_rules_dir, file)
+                print("Found rule file: {}".format(filename))
+
+                try:
+                    json_rule = json.load(open(filename))
+                except Exception as e:
+                    print("Error loading rule file: {}: {}".format(str(e)))
+                self.assertIsNotNone(json_rule)
+
+                rule_id = json_rule["id"]
+                restapi_helpers.put_rule(self, RESTURL, json_rule)
+                restapi_helpers.get_rule(self, RESTURL, rule_id)
+                restapi_helpers.delete_rule(self, RESTURL, rule_id)
+
+        # Reload rules to clear out past rules
+        restapi_helpers.reload_rules(self, RESTURL)
 
 
 if __name__ == "__main__":

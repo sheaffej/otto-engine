@@ -65,7 +65,7 @@ class TestTriggers(unittest.TestCase):
         async def _state_changed():
 
             # Build the rule
-            rule_id = "12345"
+            rule_id = "11111"
             trig_entity_id = "input_boolean.test"
             trig_old_state = "off"
             trig_new_state = "on"
@@ -74,7 +74,7 @@ class TestTriggers(unittest.TestCase):
             rulespec = self._basic_rule_helper(rule_id, trigger)
 
             # Send the rule
-            restapi_helpers.put_rule(self, RESTURL, rulespec)
+            restapi_helpers.put_rule(self, RESTURL, rulespec.serialize())
             restapi_helpers.reload_rules(self, RESTURL)
 
             # Send the event
@@ -90,6 +90,7 @@ class TestTriggers(unittest.TestCase):
             # Clean up
             await websocket.close()
             restapi_helpers.delete_rule(self, RESTURL, rule_id)
+            restapi_helpers.reload_rules(self, RESTURL)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_state_changed())
@@ -97,7 +98,7 @@ class TestTriggers(unittest.TestCase):
     def test_numeric_state_trigger(self):
         async def _numeric_state():
             # Build the rule
-            rule_id = "12345"
+            rule_id = "22222"
 
             trig_entity_id = "input_boolean.test"
             trig_above_val = 1
@@ -110,7 +111,7 @@ class TestTriggers(unittest.TestCase):
             rulespec = self._basic_rule_helper(rule_id, trigger)
 
             # Send the rule
-            restapi_helpers.put_rule(self, RESTURL, rulespec)
+            restapi_helpers.put_rule(self, RESTURL, rulespec.serialize())
             restapi_helpers.reload_rules(self, RESTURL)
 
             # Send the event
@@ -125,6 +126,7 @@ class TestTriggers(unittest.TestCase):
             # Clean up
             await websocket.close()
             restapi_helpers.delete_rule(self, RESTURL, rule_id)
+            restapi_helpers.reload_rules(self, RESTURL)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_numeric_state())
@@ -132,7 +134,7 @@ class TestTriggers(unittest.TestCase):
     def test_event_trigger(self):
         async def _event():
             # Build the rule
-            rule_id = "12345"
+            rule_id = "33333"
 
             trig_event_type = "timer_ended"
             trig_event_data = {"timer": "main_light"}
@@ -141,7 +143,7 @@ class TestTriggers(unittest.TestCase):
             rulespec = self._basic_rule_helper(rule_id, trigger)
 
             # Send the rule
-            restapi_helpers.put_rule(self, RESTURL, rulespec)
+            restapi_helpers.put_rule(self, RESTURL, rulespec.serialize())
             restapi_helpers.reload_rules(self, RESTURL)
 
             # Send the event
@@ -155,6 +157,7 @@ class TestTriggers(unittest.TestCase):
             # Clean up
             await websocket.close()
             restapi_helpers.delete_rule(self, RESTURL, rule_id)
+            restapi_helpers.reload_rules(self, RESTURL)
 
         loop = asyncio.get_event_loop()
         loop.run_until_complete(_event())
@@ -165,6 +168,7 @@ class TestTriggers(unittest.TestCase):
     # This test also tests the ServiceAction, which is the only Action that integrates with
     # Home Assistant. The remaining actions: LogAction, DelayAction, ConditionAction all
     # stay within the Otto Engine.
+
 
 if __name__ == "__main__":
     unittest.main()
