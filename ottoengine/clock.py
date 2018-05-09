@@ -60,8 +60,8 @@ class TimeSpec(object):
 
     #### Public Methods ####
 
-    def next_time_from_now(self) -> datetime.datetime:
-        return self.next_time_from(utcnow())
+    # def next_time_from_now(self) -> datetime.datetime:
+    #     return self.next_time_from(utcnow())
 
 
     def next_time_from(self, dt) -> datetime.datetime:
@@ -116,10 +116,9 @@ class TimeSpec(object):
             day_of_month = o.get("day_of_month"),
             month = o.get("month"),
             weekdays = o.get("weekdays"),
-            tz_name = o.get("tz", self._tz_name)
+            tz_name = o.get("tz", pytz.UTC)
         )
 
-# class TimeSpec
 
 
 
@@ -143,13 +142,11 @@ class ClockAlarm(object):
             if isinstance(action, AlarmTimeSpecAction):
                 if action.id == trigger_guid:
                     del self.actions[pos]
-# class ClockAlarm
 
 
 class AlarmAction(object):
     def __init__(self, action_function):
         self.action_function = action_function
-# class AlarmItem
 
 
 class AlarmTimeSpecAction(AlarmAction):
@@ -157,9 +154,6 @@ class AlarmTimeSpecAction(AlarmAction):
         super().__init__(action_function)
         self.id = id
         self.timespec = timespec
-# clas AlarmTimeSpecTime
-
-
 
 
 class EngineClock (fibers.Fiber):
@@ -173,12 +167,14 @@ class EngineClock (fibers.Fiber):
         if self._loop is None:
             self._loop = asyncio.get_event_loop()
 
+    # ~~~~~~~~~~~~~~~~~~~
+    #   Public methods
+    # ~~~~~~~~~~~~~~~~~~~
 
-    #### Public methods ####
-
-    def add_timespec_action(self, id: str, action_function, timespec: TimeSpec):
+    def add_timespec_action(self, id: str, action_function, timespec: TimeSpec, nowtime: datetime.datetime):
         action = AlarmTimeSpecAction(id, action_function, timespec)
-        self._add_action_to_timeline(timespec.next_time_from_now(), action)
+        # self._add_action_to_timeline(timespec.next_time_from_now(), action)
+        self._add_action_to_timeline(timespec.next_time_from(nowtime), action)
 
     def remove_timespec_action(self, id: str):
         for alarm in self._timeline:
@@ -187,35 +183,39 @@ class EngineClock (fibers.Fiber):
                     print("found timespec action: {}".format(id))
                     alarm.actions.remove(action)
 
-
-    #### Private methods ####
+    # ~~~~~~~~~~~~~~~~~~~~
+    #   Private methods
+    # ~~~~~~~~~~~~~~~~~~~~
 
     # Override of Fiber base class.  Called by async Fiber.async_run()
     async def _async_run(self):
-        
+
         # Start the _tick() loop
         while self._running:
-            await self._tick()                          # Execute tick
+            await self._async_tick(utcnow())                          # Execute tick
             await asyncio.sleep(TICK_INTERVAL_SECONDS)  # Sleep until next tick
 
-
-    async def _tick(self):
-
+    async def _async_tick(self, utcnow):
+        """ Process a tick of the clock
+        :param datetime.datetime utcnow: The current time in UTC, passed as arugment to
+            facilitate unit testing
+        """
         # If no timeline, do nothing
         if len(self._timeline) == 0:
             return
 
         # If now() is >= 1st element of timeline
-        while utcnow() >= self._timeline[0].alarm_time:
+        while len(self._timeline) and utcnow >= self._timeline[0].alarm_time:
 
             # pop it off the timeline
             alarm = self._timeline.pop(0)
 
             # If alarm is too old: > TICK_GRACE_SECONDS before now()
-            if utcnow() > alarm.alarm_time + datetime.timedelta(seconds=TICK_GRACE_SECONDS):
-                _LOG.warn("Clock _tick found alarms too old (> TICK_GRACE_SECONDS: {} old)".format(TICK_GRACE_SECONDS))
+            if utcnow > alarm.alarm_time + datetime.timedelta(seconds=TICK_GRACE_SECONDS):
+                _LOG.warn(
+                    "Clock _tick found alarms too old (> TICK_GRACE_SECONDS: {} old)".format(
+                        TICK_GRACE_SECONDS))
                 _LOG.warn(self._format_timeline())
-
 
             # Process its actions
             for action in alarm.actions:
@@ -223,10 +223,13 @@ class EngineClock (fibers.Fiber):
 
                 # Schedule the action's next time
                 if isinstance(action, AlarmTimeSpecAction):
-                    self.add_timespec_action(action.id, action.action_function, action.timespec)
+                    self.add_timespec_action(
+                        action.id, action.action_function, action.timespec, utcnow)
 
-        _LOG.debug("Clock _tick(): next alarm is {} seconds away".format((self._timeline[0].alarm_time - utcnow()).seconds))
-
+        if len(self._timeline):
+            _LOG.debug(
+                "Clock _tick(): next alarm is {} seconds away".format(
+                    ((self._timeline[0].alarm_time - utcnow).seconds)))
 
     def _add_action_to_timeline(self, alarm_time: datetime.datetime, action: AlarmAction):
         # Handle empty timeline case
@@ -239,25 +242,31 @@ class EngineClock (fibers.Fiber):
 
         for pos, alarm in enumerate(self._timeline):
 
-            _LOG.debug("new.alarm_time: {} | alarm.alarm_time: {}".format(alarm_time, alarm.alarm_time))
-            
+            _LOG.debug(
+                "new.alarm_time: {} | alarm.alarm_time: {}".format(alarm_time, alarm.alarm_time))
+
             # if new.alarm_time == [pos].alarm_time --> add action to existing alarm
             if alarm_time == alarm.alarm_time:
-                _LOG.debug("Found match of existing alarm, adding to its list of actions. Length: {}".format(len(alarm.actions)+1))
+                _LOG.debug(
+                    ("Found match of existing alarm, adding to its list of actions. "
+                        + "Length: {}").format(len(alarm.actions)+1))
                 alarm.add_action(action)
                 break
 
             # if new.alarm_time < [pos].alarm_time --> insert new alarm at [pos]
             elif alarm_time < alarm.alarm_time:
-                _LOG.debug("Adding new alarm at postion {} in the timeline. Alarm: {}".format(pos, alarm_time))
+                _LOG.debug(
+                    "Adding new alarm at postion {} in the timeline. Alarm: {}".format(
+                        pos, alarm_time))
                 alarm = ClockAlarm(alarm_time)
                 alarm.add_action(action)
                 self._timeline.insert(pos, alarm)
                 break
 
             # if we are at the end of the timeline --> append a new alarm at the end
-            elif len(self._timeline) == pos+1 :
-                _LOG.debug("Adding new alarm at the end of the timeline. Alarm: {}".format(alarm_time))
+            elif len(self._timeline) == pos+1:
+                _LOG.debug(
+                    "Adding new alarm at the end of the timeline. Alarm: {}".format(alarm_time))
                 alarm = ClockAlarm(alarm_time)
                 alarm.add_action(action)
                 self._timeline.append(alarm)
@@ -266,8 +275,6 @@ class EngineClock (fibers.Fiber):
             # else --> pos++ and loop again
 
         _LOG.debug(self._format_timeline())
-
-
 
     def _format_timeline(self) -> str:
         p = "Printing clock alarm timeline..."
@@ -279,8 +286,3 @@ class EngineClock (fibers.Fiber):
                 else:
                     p += "\n   Action: {}".format(action)
         return p
-
-# class EngineClock
-
-
-

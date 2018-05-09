@@ -12,17 +12,12 @@ echo "Starting otto-engine ["$(date)"]"
 ./run_otto.py &> /dev/null &
 echo "Waiting 5 seconds for Flask server to start..."
 sleep 5
+echo
 
-echo;echo;
-echo "~~~~~ Running Unit Tests ~~~~~";echo
-${PYTEST} tests/unit/
-
-echo;echo;
-echo "~~~~~ Running Integration Tests ~~~~~";echo
-${PYTEST} tests/integration/
+${PYTEST} tests/
 
 # Shutdown otto-engine
-echo
-echo "Stopping otto-engine ["$(date)"]"
+# echo
+# echo "Stopping otto-engine ["$(date)"]"
 kill -9 $(ps | grep run_otto.py | grep -v grep | awk '{print $1}')
 echo
