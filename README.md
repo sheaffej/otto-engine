@@ -50,51 +50,44 @@ Below is an example rule:
 
 ```json
 {
-  "id": "30194955",
-  "description": "Motion (home occupied) turns on Kitchen light",
-  "enabled": true,
-  "group": "Lights",
-  "notes": "Motion when home is not occupied should not turn on the lights",
-  "triggers": [
-    {
-      "platform": "state",
-      "entity_id": "sensor.kitchen_motion_sensor",
-      "to": "on"
-    }
-  ],
-  "rule_condition": {
-    "condition": "and",
-    "conditions": [
-      {
-        "condition": "state",
-        "entity_id": "input_boolean.home_is_occupied",
-        "state": "on"
-      },
-      {
-        "condition": "state",
-        "entity_id": "switch.kitchen_lights",
-        "state": "off"
-      }
-    ]
-  },
-  "actions": [
-		{
-			"action_condition: {
+	"id": "30194955",
+	"description": "Motion (home occupied) turns on Kitchen light",
+	"enabled": true,
+	"group": "Lights",
+	"notes": "Motion when home is not occupied should not turn on the lights",
+	"triggers": [{
+		"platform": "state",
+		"entity_id": "sensor.kitchen_motion_sensor",
+		"to": "on"
+	}],
+	"rule_condition": {
+		"condition": "and",
+		"conditions": [{
+				"condition": "state",
+				"entity_id": "input_boolean.home_is_occupied",
+				"state": "on"
+			},
+			{
+				"condition": "state",
+				"entity_id": "switch.kitchen_lights",
+				"state": "off"
+			}
+		]
+	},
+	"actions": [{
+		"action_condition": {
 			"condition": "state",
 			"entity_id": "switch.kitchen_lights",
 			"state": "off"
 		},
-		"action_sequence": [
-			{
-          	"domain": "switch",
-          	"service": "turn_on",
-          	"data": {
-            		"entity_id": "switch.kitchen_lights"
-          	}
-        	}
-      	]
-	}
-  ]
+		"action_sequence": [{
+			"domain": "switch",
+			"service": "turn_on",
+			"data": {
+				"entity_id": "switch.kitchen_lights"
+			}
+		}]
+	}]
 }
 ```
 
