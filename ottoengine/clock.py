@@ -108,7 +108,11 @@ class TimeSpec(object):
     #### Static Methods ####
 
     @staticmethod
-    def from_dict(dict_obj):
+    def from_dict(dict_obj:dict):
+        """Create a TimeSpec from a dict specification.
+        :param dict dict_obj: The dict spec for the TimeSpec
+        :rtype: TimeSpec
+        """
         o = dict_obj
         return TimeSpec(
             minute = o.get("minute"),
