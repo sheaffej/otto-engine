@@ -16,7 +16,7 @@ I originally built `otto-engine` for my personal use, and therefore after gettin
 ## Current Project Status
 I am currently evolving the project to include unit and integration tests and performing some basic refactoring to support the tests.
 
-Once the main unit and integration tests are in place, I will start more significant refactoring to simplify and re-organize the code so it aligns with typical open source project conventions.
+Once the main unit and integration tests are in place, I will start more significant refactoring to simplify and re-organize the code so is more consumable as an open source project.
 
 ## How it works
 
