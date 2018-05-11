@@ -47,7 +47,7 @@ class RuleCondition(object):
 #         return True;
 
 
-class AndCondition(RuleCondition): 
+class AndCondition(RuleCondition):
     # condition: and
     # conditions:
     #   - condition: ...
@@ -56,8 +56,7 @@ class AndCondition(RuleCondition):
     def __init__(self):
         super().__init__("and")
         # self._condition = "and"
-        self._conditions = []     # list of RuleConditions        
-
+        self._conditions = []     # list of RuleConditions
 
     def add_condition(self, condition):
         self._conditions.append(condition)
@@ -80,7 +79,6 @@ class AndCondition(RuleCondition):
                 _LOG.debug("Condition is FALSE: {}".format(cond.serialize()))
                 return False
         return True
-
 
 
 class OrCondition(RuleCondition):
@@ -115,12 +113,11 @@ class OrCondition(RuleCondition):
         return False
 
 
-
 class NumericStateCondition(RuleCondition):
     # condition: numeric_state
     # entity_id: sensor.temperature
     # above: 17
-    # below: 25    
+    # below: 25
 
     def __init__(self, entity_id, above_value=None, below_value=None):
         super().__init__("numeric_state")
@@ -135,7 +132,7 @@ class NumericStateCondition(RuleCondition):
                 self._above_value = float(above_value)
                 if not isinstance(self._above_value, numbers.Number):
                     raise Exception()
-            except:
+            except Exception:
                 raise helpers.ValidationError("above_value is not a number")
 
         if below_value is not None:
@@ -143,13 +140,13 @@ class NumericStateCondition(RuleCondition):
                 self._below_value = float(below_value)
                 if not isinstance(self._below_value, numbers.Number):
                     raise Exception()
-            except:
+            except Exception:
                 raise helpers.ValidationError("below_value is not a number")
-
 
         if not (self._above_value or self._below_value):
             raise helpers.ValidationError(
-                "NumericStateCondition: either above_value or below_value must be specified ({})".format(self._entity_id)
+                "NumericStateCondition: either above_value or below_value must be specified "
+                + "({})".format(self._entity_id)
             )
 
     @staticmethod
@@ -161,9 +158,13 @@ class NumericStateCondition(RuleCondition):
         # if "above_value" in j:
         #     kwargs["above_value"] = j.get("above_value")
         # if "below_value" in j:
-        #     kwargs["below_value"] = j.get("below_value")    
+        #     kwargs["below_value"] = j.get("below_value")
         # return NumericStateCondition(**kwargs)
-        return NumericStateCondition(j.get(ATTR_ENTITY_ID), j.get("above_value"), j.get("below_value"))
+        return NumericStateCondition(
+            j.get(ATTR_ENTITY_ID),
+            j.get("above_value"),
+            j.get("below_value")
+        )
 
     # Override
     def get_dict_config(self) -> dict:
@@ -179,7 +180,10 @@ class NumericStateCondition(RuleCondition):
 
     # Override
     def evaluate(self, engine) -> bool:
-        _LOG.debug("Evaluating NumericStateCondition: above_value: {}, below_value: {}".format(self._above_value, self._below_value))
+        _LOG.debug(
+            "Evaluating NumericStateCondition: above_value: "
+            + "{}, below_value: {}".format(self._above_value, self._below_value)
+        )
         current_state = float(engine.states.get_entity_state(self._entity_id).state)
         _LOG.debug("Current state: {}".format(current_state))
         if isinstance(current_state, numbers.Number):
@@ -193,11 +197,10 @@ class NumericStateCondition(RuleCondition):
         return False
 
 
-
 class StateCondition(RuleCondition):
     # condition: state
     # entity_id: device_tracker.paulus
-    # state: not_home  
+    # state: not_home
 
     def __init__(self, entity_id, state, for_delta=None):
         super().__init__("state")
@@ -230,7 +233,9 @@ class StateCondition(RuleCondition):
 
     # Override
     def evaluate(self, engine) -> bool:
-        _LOG.debug("Condition state: {}, current state: {}".format(self._state, engine.states.get_entity_state(self._entity_id).state))
+        _LOG.debug(
+            "Condition state: {}, current state: {}".format(
+                self._state, engine.states.get_entity_state(self._entity_id).state))
         if self._state == engine.states.get_entity_state(self._entity_id).state:
             return True
         return False
@@ -256,9 +261,11 @@ class SunCondition(RuleCondition):
         self._before_offset = before_offset     # datetime.timedelta
 
         if not (self._after or self._before):
-            raise helpers.ValidationError("SunCondition: either before or after must be specified")
+            raise helpers.ValidationError(
+                "SunCondition: either before or after must be specified")
         elif (self._after and self._before):
-            raise helpers.ValidationError("SunCondition: before and after cannot both be specified")
+            raise helpers.ValidationError(
+                "SunCondition: before and after cannot both be specified")
 
     # Override
     def evaluate(self, engine) -> bool:
@@ -270,8 +277,10 @@ class SunCondition(RuleCondition):
             self._after_offset = datetime.timedelta(0)      # datetime.timedelta
 
         sun_state = engine.states.get_entity_state(self._entity_id)
-        next_rising = dateutil.parser.parse(sun_state.attributes.get('next_rising'))    # datetime.datetime
-        next_setting = dateutil.parser.parse (sun_state.attributes.get('next_setting')) # datetime.datetime
+        next_rising = dateutil.parser.parse(
+            sun_state.attributes.get('next_rising'))    # datetime.datetime
+        next_setting = dateutil.parser.parse(
+            sun_state.attributes.get('next_setting'))   # datetime.datetime
 
         # False if now is already after the specified time before sunrise
         if self._before == 'sunrise' and now > (next_rising + self._before_offset):
@@ -289,8 +298,7 @@ class SunCondition(RuleCondition):
         elif self._after == 'sunset' and now < (next_setting + self._after_offset):
             return False
 
-        return True        
-
+        return True
 
     @staticmethod
     def from_dict(json):
@@ -366,12 +374,8 @@ class TimeCondition(RuleCondition):
             self._tz_name = config.TZ
 
         if not (self._after or self._before or self._weekday):
-            raise helpers.ValidationError("TimeCondition: must specify one of: after, before, or weekday")
-        # if (self._after and self._before) or (self._after and self._weekday) or (self._before and self._weekday):
-            # raise helpers.ValidationError("TimeCondition: only allowed one of: after, before, or weekday")
-
-        # _LOG.critical("TimeCondition after: {}, before: {}".format(self._after, self._before))
-
+            raise helpers.ValidationError(
+                "TimeCondition: must specify one of: after, before, or weekday")
 
     @staticmethod
     def from_dict(json):
@@ -385,7 +389,7 @@ class TimeCondition(RuleCondition):
         #     kwargs["weekday"] = j.get("weekday")
         tz_name = j.get("tz")
         if tz_name is None:
-            tz_name  = config.TZ
+            tz_name = config.TZ
 
         return TimeCondition(
             helpers.hms_string_to_time(j.get("after"), tz_name),
@@ -420,15 +424,18 @@ class TimeCondition(RuleCondition):
             _after  --> C --> _before  = returns True
             _before --> C --> _after   = returns False
 
-        If _after or _before are not defined, then they are set to the beginning and end of day, respectively
+        If _after or _before are not defined, then they are set to the beginning and end of day,
+        respectively:
             _after  = 00:00:00
             _before = 23:59:59
 
-        If the "period" crosses midnight, then we can consider the period being broken in to 2 smaller periods:
+        If the "period" crosses midnight, then we can consider the period being broken in
+        to 2 smaller periods:
 
             [00:00:00 --> _before] and [_after --> 23:59:59]
 
-        ...and therefore if C is in the middle (between _before and _after) then it is NOT in the period
+        ...and therefore if C is in the middle (between _before and _after) then it is NOT
+        in the period
         So if _before is earlier than _after, we can test for the inverse:
 
             C is NOT between _before and _after = True (within the period)
@@ -436,21 +443,19 @@ class TimeCondition(RuleCondition):
         now = datetime.datetime.now(tz=pytz.timezone(config.TZ))
         now_time = now.time()
 
-        # _LOG.critical("now_time: {}, after: {}, before: {}".format(now_time, self._after, self._before))
-
         # Snap _after and _before to day's edges if not specified
         if self._after is None:
             self._after = datetime.time(0)
         if self._before is None:
             self._before = datetime.time(23, 59, 59, 999999)
 
-        
         if self._after < self._before:     # Test for a period within a day
             if not self._after <= now_time < self._before:  # C is NOT in the mid-day period
                 return False
         else:
             # Period crosses midnight
-            if self._before <= now_time < self._after:  # C is in the mid-day non-period (i.e. not in the period)
+            if self._before <= now_time < self._after:
+                # C is in the mid-day non-period (i.e. not in the period)
                 return False
 
         if self._weekday is not None:
@@ -461,12 +466,10 @@ class TimeCondition(RuleCondition):
         return True
 
 
-
-
 class ZoneCondition(RuleCondition):
     # condition: zone
     # entity_id: device_tracker.paulus
-    # zone: zone.home    
+    # zone: zone.home
 
     def __init__(self, entity_id, zone):
         super().__init__("zone")
@@ -497,5 +500,3 @@ class ZoneCondition(RuleCondition):
         if self._zone == states.get_entity_state(self._entity_id):
             return True
         return False
-
-

@@ -12,7 +12,7 @@ class OttoEngineState(object):
         self._services_states = {}
         self._rules = {}
 
-    # Generic 
+    # Generic
     def get_state(self, group, key):
         '''Returns a state value from the engine state'''
         if "engine" in group:
@@ -26,14 +26,12 @@ class OttoEngineState(object):
     def set_state(self, group, key, value):
         '''Sets a state value in the engine state'''
         _LOG.debug("set_state({}, {}, {})".format(group, key, value))
-        # self._states[group][key] = value
         if "engine" in group:
             self._engine_states[key] = value
         if "entities" in group:
             self._entities_states[key] = value
         if "services" in group:
             self._services_states[key] = value
-
 
     # Engine States
     def set_engine_state(self, key, value):
@@ -43,7 +41,6 @@ class OttoEngineState(object):
     def get_engine_state(self, key):
         '''Returns an engine state value '''
         return self._engine_states.get(key)
-
 
     # Entity states
     def set_entity_state(self, entity_id, state):
@@ -61,13 +58,12 @@ class OttoEngineState(object):
     def get_entities(self) -> list:
         return [
             {
-                "entity_id": entity, 
-                "friendly_name": self._entity_states.get(entity).friendly_name, 
+                "entity_id": entity,
+                "friendly_name": self._entity_states.get(entity).friendly_name,
                 "hidden": self._entity_states[entity].hidden
-            } 
+            }
             for entity in self._entity_states.keys()
         ]
-
 
     # Services States
     def set_service_info(self, service_domain):
@@ -79,7 +75,6 @@ class OttoEngineState(object):
 
     def get_services(self) -> list:
         return [service for service in self._services_states.values()]
-
 
     # Rule States
     def add_rule(self, rule):
@@ -93,8 +88,3 @@ class OttoEngineState(object):
 
     def clear_rules(self):
         self._rules = {}
-
-
-
-
-

@@ -51,13 +51,17 @@ class AutomationRule(object):
             )):
 
                 async def async_handle_trigger(event_obj, trigger=trigger):
-                    # The trigger arg forces early binding of trigger http://stackoverflow.com/a/3431699/3784722
-                    ''' Called when an event occurs.  Is passed in the object representing the event
-                    that has occurred.  Determines if the event matches the trigger.  If so, 
-                    schedules the rule's condition to be evaluated on the event loop.event'''
+                    # The trigger arg forces early binding of trigger
+                    # http://stackoverflow.com/a/3431699/3784722
+                    '''Called when an event occurs.  Is passed in the object representing the event
+                    that has occurred.  Determines if the event matches the trigger.  If so,
+                    schedules the rule's condition to be evaluated on the event loop.event
+                    '''
                     if self.enabled:
                         if trigger.eval_trigger(event_obj):
-                            _LOG.info("Rule Trigger passed.  Scheduling rule condition evaluation for rule {}".format(self.id))
+                            _LOG.info(
+                                "Rule Trigger passed.  Scheduling rule condition evaluation "
+                                + "for rule {}".format(self.id))
                             self._engine.schedule_task(self.async_eval_rule())
 
                 listeners.append(StateListener(self.id, trigger.entity_id, async_handle_trigger))
@@ -69,13 +73,17 @@ class AutomationRule(object):
             if isinstance(trigger, trigger_objects.EventTrigger):
 
                 async def async_handle_trigger(event_obj, trigger=trigger):
-                    # The trigger arg forces early binding of trigger http://stackoverflow.com/a/3431699/3784722
+                    # The trigger arg forces early binding of trigger
+                    # http://stackoverflow.com/a/3431699/3784722
                     ''' Called when an event occurs.  Is passed in the object representing the event
-                    that has occurred.  Determines if the event matches the trigger.  If so, 
-                    schedules the rule's condition to be evaluated on the event loop.event'''
+                    that has occurred.  Determines if the event matches the trigger.  If so,
+                    schedules the rule's condition to be evaluated on the event loop.event
+                    '''
                     if self.enabled:
                         if trigger.eval_trigger(event_obj):
-                            _LOG.info("Rule Trigger passed.  Scheduling rule condition evaluation for rule {}".format(self.id))
+                            _LOG.info(
+                                "Rule Trigger passed.  Scheduling rule condition evaluation "
+                                + "for rule {}".format(self.id))
                             self._engine.schedule_task(self.async_eval_rule())
 
                 listeners.append(EventListener(self.id, trigger.event_type, async_handle_trigger))
@@ -90,10 +98,16 @@ class AutomationRule(object):
 
                 async def async_handle_time_trigger():
                     if self.enabled:
-                        _LOG.info("Rule Time Trigger firing.  Scheduling rule condition evaluation for rule {}".format(self.id))
+                        _LOG.info(
+                            "Rule Time Trigger firing.  Scheduling rule condition evaluation "
+                            + "for rule {}".format(self.id))
                         self._engine.schedule_task(self.async_eval_rule())
 
-                time_triggers.append(TimeListener(self.id, trigger.id, trigger.timespec, async_handle_time_trigger))
+                time_triggers.append(
+                    TimeListener(
+                        self.id, trigger.id, trigger.timespec, async_handle_time_trigger
+                    )
+                )
 
         return time_triggers
 
@@ -130,7 +144,6 @@ class RuleAction(object):
         self.description = None
         self.action_condition = None
         self.action_sequence = []
-        # self.action_function = No
 
     def get_sequence_dict_config(self):
         seq = []
@@ -157,9 +170,13 @@ class RuleAction(object):
                 success = await action.async_execute(engine)
                 if not success:
                     if isinstance(action, action_objects.ConditionAction):
-                        _LOG.info("Rule {} aborting action sequence #{} due to false Condition at action #{}".format(ruleId, seqId, actId))
+                        _LOG.info(
+                            ("Rule {} aborting action sequence #{} due to false "
+                             + "Condition at action #{}").format(ruleId, seqId, actId))
                     else:
-                        _LOG.warn("Rule {} aborting action sequence #{} due to action failure at action #{}".format(ruleId, seqId, actId))
+                        _LOG.warn(
+                            ("Rule {} aborting action sequence #{} due to action "
+                             + "failure at action #{}").format(ruleId, seqId, actId))
                     return
         else:
             _LOG.debug("Rule action will not run: {}".format(self.action_condition.serialize()))
@@ -199,10 +216,6 @@ class EventListener(HassListener):
     def event_type(self):
         return self._event_type
 
-    # @property
-    # def event_data(self):
-    #     return self._event_data
-
 
 class TimeListener(HassListener):
     def __init__(self, rule_id, listener_id: str, timespec: clock.TimeSpec, trigger_function):
@@ -223,5 +236,3 @@ class TimeListener(HassListener):
     @property
     def timepsec(self):
         return self._timespec
-
-

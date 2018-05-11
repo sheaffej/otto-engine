@@ -2,55 +2,22 @@ import flask
 import flask_cors
 import json
 
-from ottoengine.model import dataobjects
+# from ottoengine.model import dataobjects
 
 
 app = flask.Flask(__name__)
 flask_cors.CORS(app)    # Allow all cross-origin requests
 engine = None
 
+
 def run_server():
     app.run(host='0.0.0.0')
 
-# app.config.from_object('config')
-
-#################
-# Template example
-#################
-@app.route('/')
-@app.route('/index')
-def index():
-    user = {'nickname': 'Miguel'}  # fake user
-    posts = [  # fake array of posts
-        { 
-            'author': {'nickname': 'John'}, 
-            'body': 'Beautiful day in Portland!' 
-        },
-        { 
-            'author': {'nickname': 'Susan'}, 
-            'body': 'The Avengers movie was so cool!' 
-        }
-    ]
-    return flask.render_template(
-       "index.html.j2", 
-       title='Home',
-       user=user,
-       posts=posts
-    )
-
-
-##################
-# Route Handlers #
-##################
 
 @app.route('/test')
 def test():
-    result = "I was started at: {}".format(engine.get_state_threadsafe("engine", "start_time").strftime("%c"))
-
-    # Toggle siren
-    # call = dataobjects.ServiceCall("input_boolean", "toggle", {const.ENTITY_ID: "input_boolean.action_siren"})
-    # engine.call_service_threadsafe(call)
-
+    result = "I was started at: {}".format(
+        engine.get_state_threadsafe("engine", "start_time").strftime("%c"))
     return result
 
 
@@ -74,22 +41,21 @@ def states():
     # Display the states
     return flask.render_template('states.html.j2', entity_states=entity_states)
 
-############
-# REST API #
-############
 
 @app.route('/rest/ping')
 def ping():
-    return json.dumps({ "success": True })
+    return json.dumps({"success": True})
+
 
 @app.route('/rest/reload', methods=['GET'])
 def reload():
     result = engine.reload_rules()
     success = result.get("success")
     if success:
-        return json.dumps({ "success": success, "message": "Rules reloaded successfully"})
+        return json.dumps({"success": success, "message": "Rules reloaded successfully"})
     else:
-        return json.dumps({ "success": success, "message": result.get("message") })
+        return json.dumps({"success": success, "message": result.get("message")})
+
 
 @app.route('/rest/rules', methods=['GET'])
 def rules():
@@ -99,20 +65,22 @@ def rules():
     })
     return resp
 
+
 @app.route('/rest/entities', methods=['GET'])
 def entities():
     entities = engine.get_entities()
     resp = json.dumps({
         "data": [
             {
-                "entity_id": entity.get("entity_id"), 
+                "entity_id": entity.get("entity_id"),
                 "friendly_name": entity.get("friendly_name"),
                 "hidden": entity.get("hidden"),
-            } 
+            }
             for entity in entities
         ]
     })
     return resp
+
 
 @app.route('/rest/services', methods=['GET'])
 def services():
@@ -123,8 +91,8 @@ def services():
     return resp
 
 
-@app.route('/rest/rule', methods = ['PUT'])
-@app.route('/rest/rule/<rule_id>', methods = ['GET', 'PUT', 'DELETE'])
+@app.route('/rest/rule', methods=['PUT'])
+@app.route('/rest/rule/<rule_id>', methods=['GET', 'PUT', 'DELETE'])
 def rule(rule_id=None):
 
     if flask.request.method == 'GET':
@@ -142,7 +110,7 @@ def rule(rule_id=None):
             resp = json.dumps({
                 "success": True,
                 "id": rule_id,
-                "data": rule.serialize()            
+                "data": rule.serialize()
             })
         return resp
 
@@ -153,19 +121,19 @@ def rule(rule_id=None):
 
         data = flask.request.get_json().get("data")
         print(data)
-        
+
         result = engine.save_rule(data)
 
         success = result.get("success")
         if success:
             resp = json.dumps({
-                "success": success, 
-                "id": data.get("id"), 
+                "success": success,
+                "id": data.get("id"),
                 "message": "Rule saved"
             })
         else:
             resp = json.dumps({
-                "success": success, 
+                "success": success,
                 "id": rule_id,
                 "message": result.get("message"),
                 "data": data
@@ -184,11 +152,11 @@ def rule(rule_id=None):
     else:
         # POST Error 405 Method Not Allowed
         print("ERROR: {}".format(flask.request.print))
-    
+
     return resp
 
 
-@app.route('/rest/clock/check', methods = ['PUT'])
+@app.route('/rest/clock/check', methods=['PUT'])
 def clock_check():
     spec = flask.request.get_json().get('data')
     print(spec)
@@ -197,15 +165,13 @@ def clock_check():
     success = result.get("success")
     if success:
         resp = json.dumps({
-            "success": success, 
-            "data": { "next_time": result.get("next_time") }
+            "success": success,
+            "data": {"next_time": result.get("next_time")}
         })
     else:
         resp = json.dumps({
-            "success": success, 
+            "success": success,
             "message": result.get("message"),
             "data": {"spec": spec}
         })
     return resp
-
-

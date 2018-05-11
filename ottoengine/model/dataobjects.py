@@ -7,14 +7,14 @@ _LOG = logging.getLogger(__name__)
 
 class HassEvent(object):
     # "event": {
-    #     "event_type": "call_service", 
+    #     "event_type": "call_service",
     #     "data": {
-    #         "domain": "john", 
+    #         "domain": "john",
     #         "service": "sheaffer"
-    #     }, 
-    #     "origin": "REMOTE", 
+    #     },
+    #     "origin": "REMOTE",
     #     "time_fired": "2017-05-28T18:34:51.749350+00:00"
-    # }    
+    # }
 
     def __init__(self, event_type, data_obj, time_fired):
         self.event_type = event_type
@@ -27,7 +27,6 @@ class HassEvent(object):
         data = response_dict["data"]
         time_fired = dateutil.parser.parse(response_dict["time_fired"])
         return HassEvent(event_type, data, time_fired)
-
 
 
 class StateChangedEvent(HassEvent):
@@ -60,7 +59,6 @@ class StateChangedEvent(HassEvent):
         self.old_state_obj = old_state_obj
         self.new_state_obj = new_state_obj
 
-
     @staticmethod
     def from_websocket_dict(response_dict):
         data = response_dict["data"]
@@ -81,8 +79,6 @@ class StateChangedEvent(HassEvent):
         return StateChangedEvent(entity_id, old_state_obj, new_state_obj, time_fired)
 
 
-
-
 class EntityState(object):
     # {
     #   "entity_id": "group.all_automations",
@@ -98,15 +94,18 @@ class EntityState(object):
     #   },
     #   "last_changed": "2017-05-06T01:04:26.579682+00:00",
     #   "last_updated": "2017-05-06T01:04:26.579682+00:00"
-    # }    
+    # }
 
-    def __init__(self, entity_id, state, attributes, last_changed, friendly_name=None, hidden=False):
+    def __init__(
+        self, entity_id, state, attributes,
+        last_changed, friendly_name=None, hidden=False
+    ):
         self.entity_id = entity_id
         self.state = state
         self.attributes = attributes
         self.last_changed = last_changed
         self.friendly_name = friendly_name
-        
+
         if (hidden is None):
             self.hidden = False
         else:
@@ -136,20 +135,20 @@ class ServiceRegistration(object):
     #       "description": "Show a notification in the frontend",
     #       "fields": {
     #         "message": {
-    #           "description": "Message body of the notification. [Templates accepted]",
+    #           "description": "Message body of the notification.",
     #           "example": "Please check your configuration.yaml."
     #         },
     #         "title": {
-    #           "description": "Optional title for your notification. [Optional, Templates accepted]",
+    #           "description": "Optional title for your notification. [Optional]",
     #           "example": "Test notification"
     #         },
     #         "notification_id": {
-    #           "description": "Target ID of the notification, will replace a notification with the same Id. [Optional]",
+    #           "description": "Target ID of the notification [Optional]",
     #           "example": 1234
     #         }
     #       }
     #     }
-    #   },    
+    #   },
 
     def __init__(self, domain):
         self.name = domain
@@ -178,15 +177,12 @@ class ServiceRegistration(object):
 
             # service_name = next (iter (command.keys()))
             _LOG.info("Found service: {}.{}".format(domain.name, service_name))
-            
 
             service_description = service_info.get("description")
-            
+
             service = Service(domain.name, service_name, service_description)
-            
+
             for field_name, field_info in service_info.get("fields").items():
-                # print("Field name: {}".format(field_name))
-                # print("Field info: {}".format(field_info))
 
                 if (type(field_info) is dict):
                     field_description = field_info.get("description")
@@ -221,11 +217,11 @@ class Service(object):
     #           "example": "Please check your configuration.yaml."
     #         },
     #         "title": {
-    #           "description": "Optional title for your notification. [Optional, Templates accepted]",
+    #           "description": "Optional title for your notification. [Optional]",
     #           "example": "Test notification"
     #         },
     #         "notification_id": {
-    #           "description": "Target ID of the notification, will replace a notification with the same Id. [Optional]",
+    #           "description": "Target ID of the notification [Optional]",
     #           "example": 1234
     #         }
     #       }
@@ -276,10 +272,10 @@ class ServiceField(object):
 class ServiceCall(object):
     # Command to websocket
     # {
-    #     "id": 3, 
-    #     "type": "call_service", 
-    #     "domain": "input_boolean", 
-    #     "service": "toggle", 
+    #     "id": 3,
+    #     "type": "call_service",
+    #     "domain": "input_boolean",
+    #     "service": "toggle",
     #     "service_data": {
     #         "entity_id": "input_boolean.action_siren"
     #     }
@@ -287,17 +283,12 @@ class ServiceCall(object):
 
     def __init__(self, domain, service, service_data_dict):
         '''Creates a ServiceCall object.
-        
+
         Field: service_data_dict can be {} or None
         '''
         self.domain = domain                    # i.e. input_boolean
         self.service = service                  # i.e. toggle
         self.service_data = service_data_dict   # fields: {entity_id:value, visible:True}
-        
+
         if self.service_data is None:
             self.service_data = {}
-
-
-
-
-

@@ -20,13 +20,12 @@ class RuleActionItem(object):
         return self.get_dict_config()
 
     async def async_execute(self, engine) -> bool:
-        '''Runs the action.  
-        Returns True if action was successful.  
-        Returns False if the action was unsuccessful.
+        '''Runs the action.
+            Returns True if action was successful.
+            Returns False if the action was unsuccessful.
         '''
         # This will be overridden by the subclasses
         raise NotImplementedError("async_execute was not properly overridden")
-
 
 
 class ServiceAction(RuleActionItem):
@@ -54,7 +53,6 @@ class ServiceAction(RuleActionItem):
         )
         return True
 
-
     @staticmethod
     def from_dict(dict_obj):
         # j = json
@@ -70,8 +68,6 @@ class ServiceAction(RuleActionItem):
         service = dict_obj.get(const.SERVICE)
         data = dict_obj.get(const.DATA, [])
         return ServiceAction(domain, service, data_dict=data)
-
-
 
     # Override
     def get_dict_config(self) -> dict:
@@ -103,7 +99,6 @@ class ConditionAction(RuleActionItem):
         _LOG.info("Condition action is {}: {}".format(result, self._condition_obj.serialize()))
         return result
 
-
     # Override
     def get_dict_config(self) -> dict:
         return self._condition_obj.get_condition_config()
@@ -127,13 +122,12 @@ class DelayAction(RuleActionItem):
         # return DelayAction(helpers.dict_to_timedelta(json["delay"]))
         return DelayAction(helpers.hms_string_to_timedelta(json["delay"]))
 
-
     # Override
     def get_dict_config(self) -> dict:
         # To re-create: timedelta(days, seconds, microseconds)
         return {
             # "delay": helpers.timedelta_to_dict(self._delay_delta)
-            "delay": helpers.timedelta_to_hms_string(self._delay_delta)            
+            "delay": helpers.timedelta_to_hms_string(self._delay_delta)
         }
 
 
@@ -153,13 +147,12 @@ class LogAction(RuleActionItem):
         return True
 
     def get_dict_config(self) -> dict:
-        return { "log_message": self._message }
-
+        return {"log_message": self._message}
 
 
 # class WaitAction(RuleActionItem):
 #     # wait_template: "{{ states.climate.kitchen.attributes.valve < 10 }}"
-#     # timeout: 00:01:00    
+#     # timeout: 00:01:00
 
 #     def __init__(self, wait_template, timeout_delta=None):
 #         self._wait_template = wait_template     # string
@@ -181,14 +174,14 @@ class LogAction(RuleActionItem):
 #         return {
 #             "wait_template": self._wait_template,
 #             "timeoout": helpers.timedelta_to_dict(self._timeout_delta)
-#         } 
-    
+#         }
+
 #     # def serialize(self) -> dict:
 #     #     # To re-create: timedelta(days, seconds, microseconds)
 #     #     return {
 #     #         "wait_template": self._wait_template,
 #     #         "timeoout": helpers.timedelta_to_dict(self._timeout_delta)
-#     #     } 
+#     #     }
 
 
 # class EventAction(RuleActionItem):
@@ -219,4 +212,3 @@ class LogAction(RuleActionItem):
 #             "event_data": self._event_data
 #         }
 #         return d
-

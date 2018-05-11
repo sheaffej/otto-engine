@@ -1,11 +1,9 @@
 import asyncio
 import datetime
-# import json
 import logging
 import signal
 import sys
 import traceback
-# import typing
 
 from ottoengine import state, const, persistence, config
 from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
@@ -22,11 +20,10 @@ class OttoEngine(object):
 
     def __init__(self, config: config.EngineConfig):
         self._config = config
-        self._hass_host = config.hass_host
-        self._hass_port = config.hass_port
-        self._hass_password = config.hass_password
-        self._hass_ssl = config.hass_ssl
-        # self._tzinfo = tzinfo
+        # self._hass_host = config.hass_host
+        # self._hass_port = config.hass_port
+        # self._hass_password = config.hass_password
+        # self._hass_ssl = config.hass_ssl
 
         self._loop = asyncio.get_event_loop()
         self._states = state.OttoEngineState()
@@ -57,14 +54,6 @@ class OttoEngine(object):
         task = self.schedule_task(fiber.async_run())
         fiber.asyncio_task = task
 
-    # def _add_event_listener(self, listener):
-    #     _LOG.info("Adding event listener for entity: {} (rule: {})".format(listener.entity_id, listener.rule_id))
-    #     # entry = { 'rule_id': rule_id, 'function': func }
-    #     if listener.entity_id in self._event_listeners:
-    #         self._event_listeners[listener.entity_id].append(listener)
-    #     else:
-    #         self._event_listeners[listener.entity_id] = [listener]
-
     #############################
     #    Private corroutines    #
     #############################
@@ -78,7 +67,8 @@ class OttoEngine(object):
 
         # Initialize the websocket
         self._websocket = hass_websocket_client.AsyncHassWebsocket(
-            self._hass_host, self._hass_port, self._hass_password, self._hass_ssl
+            self._config.hass_host, self._config.hass_port,
+            self._config.hass_password, self._config.hass_ssl
         )
         self._fiber_websocket_reader = hass_websocket.HassWebSocketReader(self, self._websocket)
 
@@ -101,13 +91,10 @@ class OttoEngine(object):
         self._run_fiber(self._clock)
 
         # Load the Automation Rules
-        # await self._async_load_rules()
         await self._async_reload_rules()
 
     async def _async_load_rules(self):
         _LOG.info("Loading rules from persistence")
-        # persistence.engine = self
-        # persist_mgr = persistence.PersistenceManager(self, self._config.json_rules_dir)
 
         rules = self._persistence_mgr.get_rules(self._config.json_rules_dir)
         for rule in rules:
@@ -169,16 +156,6 @@ class OttoEngine(object):
             _LOG.error(message)
             traceback.print_exc()
             return {"success": False, "message": message}
-
-        # print("{} rules loaded".format(len(self.states._rules)))
-        # num_l = 0
-        # for l in self._event_listeners.items():
-        #     num_l += len(l)
-        # print("{} event listeners".format(num_l))
-        # num_l = 0
-        # for l in self._clock._timeline:
-        #     num_l += len(l.actions)
-        # print("{} time  listeners".format(num_l))
 
         return {"success": True}
 
@@ -266,22 +243,12 @@ class OttoEngine(object):
     async def async_call_service(self, service_call):
         await self._websocket.async_call_service(service_call)
 
-    # ** Things outside the engine should not be setting state **
-    #
-    # def set_state_threadsafe(self, group, key, value):
-    #     '''Set state from engine. This is called by threads outside of the envent loop'''
-    #     _LOG.debug("set_state() called with - group: {}, key: {}, value: {}".format(group, key, value))
-    #     future = asyncio.run_coroutine_threadsafe(self._async_set_state(group, key, value), self._loop)
-    #     future.result(ASYNC_TIMEOUT_SECS)  # Wait for the result with a timeout
-
     def schedule_task(self, coro) -> asyncio.Task:
         return self._loop.create_task(coro)
 
     def get_rules(self) -> list:
         async def _async_get_rules():
             return self.states.get_rules()
-        # future = asyncio.run_coroutine_threadsafe(async_get_rules(), self._loop)
-        # return future.result(ASYNC_TIMEOUT_SECS)
         return asyncio.run_coroutine_threadsafe(
             _async_get_rules(), self._loop).result(ASYNC_TIMEOUT_SECS)
 
@@ -338,16 +305,6 @@ class OttoEngine(object):
         return future.result(ASYNC_TIMEOUT_SECS)
 
     def reload_rules(self) -> bool:
-        # async def _async_reload_rules():
-        #     try:
-        #         await self._async_clear_rules()
-        #         await self._async_load_rules()
-        #     except Exception as e:
-        #         message = "Exception reloading rules: {}: {}".format(sys.exc_info()[0], sys.exc_info()[1])
-        #         _LOG.error(message)
-        #         return { "success": False, "message": message }
-        #     return { "success": True }
-
         future = asyncio.run_coroutine_threadsafe(self._async_reload_rules(), self._loop)
         return future.result(ASYNC_TIMEOUT_SECS)
 
@@ -356,7 +313,6 @@ class OttoEngine(object):
         self.schedule_task(self._async_setup_engine())
 
     def check_timespec(self, spec_dict):
-        # async def _async_check_timespec(spec):
         try:
             spec = clock.TimeSpec.from_dict(spec_dict)
             next_time = spec.next_time_from_now().isoformat()

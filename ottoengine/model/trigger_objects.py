@@ -13,6 +13,7 @@ _LOG = logging.getLogger(__name__)
 ATTR_PLATFORM = "platform"
 ATTR_ENTITY_ID = "entity_id"
 
+
 class RuleTrigger(object):
 
     def __init__(self, platform):
@@ -34,7 +35,7 @@ class RuleTrigger(object):
 class StateTrigger(RuleTrigger):
     # platform: state
     # entity_id: device_tracker.paulus, device_tracker.anne_therese
-    
+
     # Optional
     # from: 'not_home'
     # to: 'home'
@@ -47,7 +48,6 @@ class StateTrigger(RuleTrigger):
         # Optional
         self._to_state = to_state         # string
         self._from_state = from_state     # string
-
 
     @property
     def entity_id(self):
@@ -81,7 +81,6 @@ class StateTrigger(RuleTrigger):
         #     d["for"] = self._for_delta
         return d
 
-
     def eval_trigger(self, event_obj) -> bool:
         run = False
         _LOG.debug("got event: {}".format(event_obj.raw_msg))
@@ -89,8 +88,8 @@ class StateTrigger(RuleTrigger):
 
         if isinstance(event_obj, dataobjects.StateChangedEvent):
             if self._entity_id in event_obj.entity_id:
-                if self._to_state in { None, event_obj.new_state_obj.state }:
-                    if self._from_state in { None, event_obj.old_state_obj.state }:
+                if self._to_state in {None, event_obj.new_state_obj.state}:
+                    if self._from_state in {None, event_obj.old_state_obj.state}:
                         run = True
 
                 # Check to make sure the state actually changed
@@ -99,9 +98,11 @@ class StateTrigger(RuleTrigger):
                 if (event_obj.old_state_obj.state == event_obj.new_state_obj.state):
                     run = False
                     _LOG.warn(
-                        "StateTrigger fired, but state hasn't actually changed - " + 
+                        "StateTrigger fired, but state hasn't actually changed - " +
                         "entity_id: {}, old_state: {}, new_state: {}".format(
-                            event_obj.entity_id, event_obj.old_state_obj.state, event_obj.new_state_obj.state
+                            event_obj.entity_id,
+                            event_obj.old_state_obj.state,
+                            event_obj.new_state_obj.state
                         )
                     )
 
@@ -113,7 +114,7 @@ class NumericStateTrigger(RuleTrigger):
     # Mandatory
     # platform: numeric_state
     # entity_id: sensor.temperature
-    
+
     # Optional
     # ---> Not going to support value_template yet <---
     # value_template: '{{ state.attributes.battery }}'
@@ -134,27 +135,20 @@ class NumericStateTrigger(RuleTrigger):
 
         if (above_value is None) and (below_value is None):
             raise helpers.ValidationError(
-                "NumericStateTrigger: either above_value or below_value must be specified ({})".format(self._entity_id)
+                "NumericStateTrigger: either above_value or below_value "
+                + "must be specified ({})".format(self._entity_id)
             )
 
     @property
     def entity_id(self):
         return self._entity_id
 
-
     @staticmethod
     def from_dict(json):
         j = json
         entity_id = j.get(ATTR_ENTITY_ID)
-
-        # above = None
-        # if "above_value" in j:
         above = j.get("above_value")
-
-        # below = None
-        # if "below_value" in j:
         below = j.get("below_value")
-
         return NumericStateTrigger(entity_id, above, below)
 
     # Override
@@ -175,8 +169,14 @@ class NumericStateTrigger(RuleTrigger):
         if isinstance(event_obj, dataobjects.StateChangedEvent):
             if self._entity_id in event_obj.entity_id:
                 if isinstance(event_obj.new_state_obj.state, numbers.Number):
-                    if (self._above_value is None) or (event_obj.new_state_obj.state > self._above_value):
-                        if (self._below_value is None) or (event_obj.new_state_obj.state < self._below_value):
+                    if (
+                        (self._above_value is None)
+                        or (event_obj.new_state_obj.state > self._above_value)
+                    ):
+                        if (
+                            (self._below_value is None)
+                            or (event_obj.new_state_obj.state < self._below_value)
+                        ):
                             run = True
         return run
 
@@ -238,14 +238,17 @@ class TimeTrigger(RuleTrigger):
     # month: '*'
     # weekdays: '*'
 
-    def __init__(self, minute=None, hour=None, day_of_month=None, month=None, weekdays=None, tz=None):
+    def __init__(
+        self, minute=None, hour=None, day_of_month=None,
+        month=None, weekdays=None, tz=None
+    ):
         self._id = uuid.uuid4()
         self._timespec = clock.TimeSpec(
-            minute=minute, 
-            hour=hour, 
-            day_of_month=day_of_month, 
-            month=month, 
-            weekdays=weekdays, 
+            minute=minute,
+            hour=hour,
+            day_of_month=day_of_month,
+            month=month,
+            weekdays=weekdays,
             tz_name=tz
         )
 
@@ -270,7 +273,7 @@ class TimeTrigger(RuleTrigger):
 
     # Override
     def get_dict_config(self) -> dict:
-        o = { "platform": "time" }
+        o = {"platform": "time"}
         o.update(self._timespec.serialize())
         return o
 
@@ -278,8 +281,10 @@ class TimeTrigger(RuleTrigger):
 class HomeAssistantTrigger(RuleTrigger):
     pass
 
+
 class MqttTrigger(RuleTrigger):
     pass
+
 
 class SunTrigger(RuleTrigger):
     pass
@@ -287,5 +292,3 @@ class SunTrigger(RuleTrigger):
 
 class ZoneTrigger(RuleTrigger):
     pass
-
-
