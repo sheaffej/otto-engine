@@ -13,7 +13,7 @@ Fortunately Home Assistant has a very clean and open API, and also support for W
 
 I originally built `otto-engine` for my personal use, and therefore after getting the prototype working, I simply evolved it incrementally to perform the functions I needed in the most minimalistic way. It worked well for me, but as it matured, I decided I should release it on GitHub as a public repository so others may use it, or derive other work from it.
 
-##Current Project Status
+## Current Project Status
 I am currently evolving the project to include unit and integration tests and performing some basic refactoring to support the tests.
 
 Once the main unit and integration tests are in place, I will start more significant refactoring to simplify and re-organize the code so it aligns with typical open source project conventions.
