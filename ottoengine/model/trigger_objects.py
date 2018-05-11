@@ -2,7 +2,8 @@ import numbers
 import logging
 import uuid
 
-from ottoengine import clock, helpers, dataobjects
+from ottoengine import clock, helpers
+from ottoengine.model import dataobjects
 
 
 _LOG = logging.getLogger(__name__)

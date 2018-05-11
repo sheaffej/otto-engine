@@ -2,7 +2,8 @@ import flask
 import flask_cors
 import json
 
-from ottoengine import dataobjects, const
+from ottoengine.model import dataobjects
+
 
 app = flask.Flask(__name__)
 flask_cors.CORS(app)    # Allow all cross-origin requests

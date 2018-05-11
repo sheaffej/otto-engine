@@ -5,7 +5,8 @@ import logging
 import traceback
 from concurrent.futures import CancelledError
 
-from ottoengine import hass_websocket, dataobjects, const
+from ottoengine import const
+from ottoengine.model import dataobjects
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.DEBUG)

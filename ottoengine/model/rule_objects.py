@@ -1,6 +1,7 @@
 import logging
 
-from ottoengine import clock, action_objects, trigger_objects
+from ottoengine import clock
+from ottoengine.model import action_objects, trigger_objects
 
 
 _LOG = logging.getLogger(__name__)

@@ -1,10 +1,8 @@
 import asyncio
 import logging
 
-try:
-    import helpers, dataobjects, const
-except ImportError:
-    from . import helpers, dataobjects, const
+from ottoengine import const, helpers
+from ottoengine.model import dataobjects
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.DEBUG)

@@ -6,9 +6,9 @@ import json
 import unittest
 
 from ottoengine.testing.rule_helpers import AutomationRuleSpec
-from ottoengine.trigger_objects import StateTrigger, NumericStateTrigger, EventTrigger
-from ottoengine.action_objects import ServiceAction
-from ottoengine.rule_objects import RuleAction
+from ottoengine.model.trigger_objects import StateTrigger, NumericStateTrigger, EventTrigger
+from ottoengine.model.action_objects import ServiceAction
+from ottoengine.model.rule_objects import RuleAction
 from ottoengine.testing import websocket_helpers, restapi_helpers
 
 

@@ -4,7 +4,7 @@ import json
 import logging
 import traceback
 
-from ottoengine import rule_objects, trigger_objects, condition_objects, action_objects, engine
+from ottoengine.model import rule_objects, trigger_objects, condition_objects, action_objects
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.DEBUG)

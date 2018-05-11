@@ -9,8 +9,9 @@ import traceback
 
 from ottoengine import (
     clock, state, fibers, hass_websocket,
-    dataobjects, const, persistence, test_websocket, config
+    const, persistence, test_websocket, config
 )
+from ottoengine.model import dataobjects
 
 
 ASYNC_TIMEOUT_SECS = 5
