@@ -2,7 +2,8 @@ import numbers
 import logging
 import uuid
 
-from ottoengine import clock, helpers
+from ottoengine import helpers
+from ottoengine.fibers import clock
 from ottoengine.model import dataobjects
 
 

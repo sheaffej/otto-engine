@@ -1,6 +1,6 @@
 import logging
 
-from ottoengine import clock
+from ottoengine.fibers import clock
 from ottoengine.model import action_objects, trigger_objects
 
 
@@ -10,7 +10,7 @@ _LOG.setLevel(logging.DEBUG)
 
 class AutomationRule(object):
 
-    def __init__ (self, engine, id, description='', enabled=True, group=None, notes=''):
+    def __init__(self, engine, id, description='', enabled=True, group=None, notes=''):
         self._engine = engine
         self.id = id
         self.description = description
@@ -63,7 +63,6 @@ class AutomationRule(object):
                 listeners.append(StateListener(self.id, trigger.entity_id, async_handle_trigger))
         return listeners
 
-
     def get_event_listeners(self) -> list:
         listeners = []
         for trigger in self.triggers:
@@ -82,7 +81,6 @@ class AutomationRule(object):
                 listeners.append(EventListener(self.id, trigger.event_type, async_handle_trigger))
         return listeners
 
-
     def get_time_listeners(self) -> list:
         time_triggers = []
         for trigger in self.triggers:
@@ -99,7 +97,6 @@ class AutomationRule(object):
 
         return time_triggers
 
-
     async def async_eval_rule(self):
         ''' Called after a triggered RuleTrigger evals to True.
         This function will evalutes the AutomationRule's rule_condition.
@@ -110,7 +107,6 @@ class AutomationRule(object):
         if self.rule_condition is None or self.rule_condition.evaluate(self._engine):
             _LOG.debug("Rule condition passed. Scheduling actions for rule: {}".format(self.id))
             self._engine.schedule_task(self.async_run_actions())
-
 
     async def async_run_actions(self):
         '''Run the action sequences'''
@@ -210,6 +206,12 @@ class EventListener(HassListener):
 
 class TimeListener(HassListener):
     def __init__(self, rule_id, listener_id: str, timespec: clock.TimeSpec, trigger_function):
+        """
+            :param str rule_id:
+            :param str listener_id:
+            :param clock.TimeSpec timespec:
+            :param function trigger_function:
+        """
         super().__init__(rule_id, trigger_function)
         self._listener_id = listener_id
         self._timespec = timespec

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PYTEST="pytest -v"
+PYTEST="pytest -v --cache-clear"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..

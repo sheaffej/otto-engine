@@ -7,7 +7,7 @@ import pytz
 import unittest
 import uuid
 
-from ottoengine import clock
+from ottoengine.fibers import clock
 
 TZ = "America/Los_Angeles"
 

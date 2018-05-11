@@ -7,10 +7,8 @@ import sys
 import traceback
 # import typing
 
-from ottoengine import (
-    clock, state, fibers, hass_websocket,
-    const, persistence, test_websocket, config
-)
+from ottoengine import state, const, persistence, config
+from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
 from ottoengine.model import dataobjects
 
 
@@ -76,13 +74,13 @@ class OttoEngine(object):
         # Start testing Websocket server
         if self._config.test_websocket_port:
             _LOG.info("Starting testing websocket server")
-            self._run_fiber(test_websocket.TestWebsocketServer(self._config.test_websocket_port))
+            self._run_fiber(test_websocket.TestWebSocketServer(self._config.test_websocket_port))
 
         # Initialize the websocket
-        self._websocket = hass_websocket.AsyncHassWebsocket(
+        self._websocket = hass_websocket_client.AsyncHassWebsocket(
             self._hass_host, self._hass_port, self._hass_password, self._hass_ssl
         )
-        self._fiber_websocket_reader = fibers.FiberWebsocketReader(self, self._websocket)
+        self._fiber_websocket_reader = hass_websocket.HassWebSocketReader(self, self._websocket)
 
         # Run the Websocket Reader Fiber
         self._run_fiber(self._fiber_websocket_reader)

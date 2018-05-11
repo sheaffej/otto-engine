@@ -8,14 +8,7 @@ _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.DEBUG)
 
 
-# class WebSocketError(Exception):
-#     '''Exeption class for websocket errors'''
-
-#     def __init__(self, message):
-#         super().__init__(message)
-
-
-class TestWebsocketServer(Fiber):
+class TestWebSocketServer(Fiber):
     def __init__(self, port):
         super().__init__()
         self._port = port
