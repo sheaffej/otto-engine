@@ -1,0 +1,98 @@
+{
+  "id": "23432413534",
+  "description": "Turn everything on after a 3 second delay if both triggered",
+  "enabled": true,
+  "group": "Test",
+  "triggers": [
+    {
+      "platform": "state",
+      "entity_id": "input_boolean.state_home_occupied",
+      "to": "on",
+      "from": "off"
+    },
+    {
+      "platform": "state",
+      "entity_id": "input_boolean.state_motion_in_home",
+      "to": "on",
+      "from": "off"
+    },
+    {
+      "platform": "numeric_state",
+      "entity_id": "input_slider.temp_slider",
+      "above_value": 80
+    },
+    {
+      "platform": "event",
+      "event_type": "call_service",
+      "event_data": {
+        "service": "test_service"
+      }
+    }
+  ],
+  "rule_condition": {
+    "condition": "and",
+    "conditions": [
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.state_home_occupied",
+        "state": "on"
+      },
+      {
+        "condition": "state",
+        "entity_id": "input_boolean.state_motion_in_home",
+        "state": "on"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "action_condition": {
+        "condition": "state",
+        "entity_id": "input_boolean.state_home_occupied",
+        "state": "on"
+      },
+      "action_sequence": [
+        {
+          "domain": "input_boolean",
+          "service": "turn_on",
+          "data": {
+            "entity_id": "input_boolean.action_light"
+          }
+        },
+        {
+          "domain": "input_boolean",
+          "service": "turn_on",
+          "data": {
+            "entity_id": "input_boolean.action_siren"
+          }
+        }
+      ]
+    },
+    {
+      "action_condition": {
+        "condition": "state",
+        "entity_id": "input_boolean.state_motion_in_home",
+        "state": "on"
+      },
+      "action_sequence": [
+        {
+          "delay": "00:00:03"
+        },
+        {
+          "domain": "input_boolean",
+          "service": "turn_on",
+          "data": {
+            "entity_id": "input_boolean.action_light2"
+          }
+        },
+        {
+          "domain": "input_boolean",
+          "service": "turn_on",
+          "data": {
+            "entity_id": "input_boolean.action_siren2"
+          }
+        }
+      ]
+    }
+  ]
+}

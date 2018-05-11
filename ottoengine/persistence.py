@@ -140,10 +140,10 @@ class PersistenceManager:
         try:
             rule = rule_objects.AutomationRule(
                 engine=self._engine,
-                id=rule_dict["id"],
-                description=rule_dict["description"],
-                enabled=rule_dict["enabled"],
-                group=rule_dict["group"],
+                id=rule_dict.get("id"),
+                description=rule_dict.get("description", ''),
+                enabled=rule_dict.get("enabled", True),
+                group=rule_dict.get("group", ''),
                 notes=rule_dict.get("notes", '')
             )
         except Exception as e:
