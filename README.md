@@ -22,7 +22,7 @@ Once the main unit and integration tests are in place, I will start more signifi
 
 `otto-engine` communicates with Home Assistant over the [WebSocket API](https://developers.home-assistant.io/docs/en/external_api_websocket.html). 
 
-`otto-engine` subcribes to *events* (such as sesor or device state change events) by sending a message over the Websocket to Home Assistant. Then any time there is a state change with a sensor, device, etc, `otto-engine` receives an event message from Home Assistant over the WebSocket. This is an asynchronous messaging protocol.
+`otto-engine` subcribes to *events* (such as sensor or device state change events) by sending a message over the WebSocket to Home Assistant. Then any time there is a state change with a sensor, device, etc, `otto-engine` receives an event message from Home Assistant over the WebSocket. This is an asynchronous messaging protocol.
 
 Home Assistant exposes the things it can be asked to do as *services*. `otto-engine` can then cause Home Assistant to take an action by calling a service via the WebSocket connection. 
 
@@ -41,10 +41,10 @@ Rules are described as JSON documents. Each rule has:
 * **Group**: A human-friendly title of a group of rules (like Lights, or Alerts)
 * **Notes**: A free-text area to store notes about the rule
 * **Triggers**: A list of Trigger definitions that will cause this rule to be evaluated
-* **Rule Condition**: A boolean expression to determine if the rule's actions should be run or not
-* **Actions**: A list of actions, each of which consists of:
-	* **Action Condition**: A boolean expression to determine if this action should be run or not
-	* **Action Sequence**: A list of actions that will be run in order if the action condition evaluates to true
+* **Rule Condition**: A boolean expression of Conditions to determine if the rule's actions should be run or not
+* **Actions**: A list of Actions, each of which consists of:
+	* **Action Condition**: A boolean expression of Conditions to determine if this action should be run or not
+	* **Action Sequence**: A list of Action Items that will be run in order, if the action condition evaluates to true
 
 Below is an example rule:
 
@@ -91,11 +91,13 @@ Below is an example rule:
 }
 ```
 
-When designing the rule schema, I there were a few things I wanted rules to be able to do:
+When designing the rule schema, there were a few things I wanted rules to be able to do:
 
 * I wanted to be able to easily enable/disable rules. For example I have rules that I use only when I am on vacation. They are complex rules, and I don't want to have to delete them, and re-create them every time I go on vacation. 
 * I wanted to have a condition for the entire rule (i.e. `rule_condition`), but also then have different action paths depending on the current state of the home. So each Action also has an `action_condition`. There is of course some "condition overlap" here, for instance in the example above, both the `rule_condition` and `action_condition` do the same thing. I included both in this rule simply to demonstrate the schema.
+* I wanted to be able to create, test, modify, enable/disable, and delete rules without restarting Home Assistant.
+* I wanted to have a UI to create, view, and modify the rules
 
-Rules are created, modified, and viewed over a REST API. I have a complementary project called `otto-ui` which is a web-based UI to work with the rules. The `otto-ui` project is built with Angular 2 / TypeScript. That project is still private because I have some private configuration details hard-coded into it. But I plan to release that as a public repository also in the future.
+Rules are created, modified, and viewed over a REST API. I have a complementary project called `otto-ui` which is a web-based UI to work with the rules. The `otto-ui` project is built with Angular 2 / TypeScript. That project is private because I have some private configuration details still hard-coded into it. But I plan to release that as a public repository also in the future.
 
-Rules are persisted as JSON files currently on the same file system that `otto-engine` is running. However the persistence module's API was designed to be persistence-neutral, and therefore can be modified to use other persistence engines (like MySQL,  MongoDB, or Elasticsearch). 
+Rules are persisted as JSON files currently on the same file system that `otto-engine` is running. However the persistence module's API was designed to be persistence-neutral, and therefore can be extended to use other persistence engines (like MySQL,  MongoDB, or Elasticsearch). 
