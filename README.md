@@ -78,7 +78,6 @@ Below is an example rule:
     ]
   },
   "actions": [
-	{
 		{
 			"action_condition: {
 			"condition": "state",
