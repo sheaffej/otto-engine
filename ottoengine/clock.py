@@ -12,9 +12,10 @@ _LOG = logging.getLogger(__name__)
 
 TICK_INTERVAL_SECONDS = 1  # Number of seconds between ticks
 
-TICK_GRACE_SECONDS = 60     # Number of seconds past a scheduled event that it can still be executed
-                            # If the event isn't executed by this time after it's scheduled time
-                            # don't execute it, but just reschedule it for it's next time
+# Number of seconds past a scheduled event that it can still be executed
+# If the event isn't executed by this time after it's scheduled time
+# don't execute it, but just reschedule it for it's next time
+TICK_GRACE_SECONDS = 60
 
 
 def utcnow():
@@ -23,7 +24,9 @@ def utcnow():
 
 class TimeSpec(object):
 
-    def __init__(self, tz_name:str, minute=None, hour=None, day_of_month=None, month=None, weekdays=None):
+    def __init__(
+        self, tz_name, minute=None, hour=None, day_of_month=None, month=None, weekdays=None
+    ):
 
         # This object follows cron syntax:  https://en.wikipedia.org/wiki/Cron
         self._minute = minute
@@ -34,7 +37,6 @@ class TimeSpec(object):
         self._tz_name = tz_name
         # if tz_name is None:
         #     self._tz_name = config.TZ
-        
 
     def _create_cron_spec(self):
         minute = self._minute
@@ -42,7 +44,6 @@ class TimeSpec(object):
         day_of_month = self._day_of_month
         month = self._month
         weekdays = self._weekdays
-
 
         if minute is None:
             minute = '*'
@@ -57,12 +58,9 @@ class TimeSpec(object):
 
         return "{} {} {} {} {}".format(minute, hour, day_of_month, month, weekdays)
 
-
-    #### Public Methods ####
-
-    # def next_time_from_now(self) -> datetime.datetime:
-    #     return self.next_time_from(utcnow())
-
+    # ~~~~~~~~~~~~~~~~~~~
+    #   Public Methods
+    # ~~~~~~~~~~~~~~~~~~~
 
     def next_time_from(self, dt) -> datetime.datetime:
 
@@ -74,12 +72,11 @@ class TimeSpec(object):
         #     dt = dt.astimezone(pytz.timezone(config.TZ))
         #     # print("convering dt to LOCALTZ: {}".format(dt))
 
-        cron = croniter.croniter(self._create_cron_spec(), dt.astimezone(pytz.timezone(self._tz_name)))
+        cron = croniter.croniter(
+            self._create_cron_spec(),
+            dt.astimezone(pytz.timezone(self._tz_name))
+        )
         return cron.get_next(datetime.datetime)
-
-        return dt
-
-
 
     def serialize(self) -> dict:
         o = {}
@@ -104,26 +101,25 @@ class TimeSpec(object):
 
         return o
 
-
-    #### Static Methods ####
+    # ~~~~~~~~~~~~~~~~~~~
+    #   Static Methods
+    # ~~~~~~~~~~~~~~~~~~~
 
     @staticmethod
-    def from_dict(dict_obj:dict):
+    def from_dict(dict_obj):
         """Create a TimeSpec from a dict specification.
         :param dict dict_obj: The dict spec for the TimeSpec
         :rtype: TimeSpec
         """
         o = dict_obj
         return TimeSpec(
-            minute = o.get("minute"),
-            hour = o.get("hour"),
-            day_of_month = o.get("day_of_month"),
-            month = o.get("month"),
-            weekdays = o.get("weekdays"),
-            tz_name = o.get("tz", pytz.UTC)
+            minute=o.get("minute"),
+            hour=o.get("hour"),
+            day_of_month=o.get("day_of_month"),
+            month=o.get("month"),
+            weekdays=o.get("weekdays"),
+            tz_name=o.get("tz", pytz.UTC)
         )
-
-
 
 
 class ClockAlarm(object):
@@ -131,14 +127,13 @@ class ClockAlarm(object):
     This is what sits on the ClockTriggers queue.
     A ClockAlarm can hold multiple actions to trigger at its clock time
     '''
+
     def __init__(self, alarm_time):
         self.alarm_time = alarm_time    # This is a datetime object
         self.actions = []               # List of AlarmActions
 
-
     def add_action(self, action):
         self.actions.append(action)
-
 
     def remove_action(self, trigger_guid):
         for pos, action in self.actions:
@@ -175,25 +170,49 @@ class EngineClock (fibers.Fiber):
     #   Public methods
     # ~~~~~~~~~~~~~~~~~~~
 
-    def add_timespec_action(self, id: str, action_function, timespec: TimeSpec, nowtime: datetime.datetime):
+    def add_timespec_action(
+        self, id, action_function,
+        timespec, nowtime
+    ):
+        """
+        Parameters:
+            :param str id: The ID of the TimeSpec
+            :param function action_function: The function to be invoked at the time
+            :param TimeSpec timespec: The TimeSpace object
+            :param datetime.datetime nowtime: The current time used when determining the next time
+                to run the action_function
+        """
         action = AlarmTimeSpecAction(id, action_function, timespec)
         # self._add_action_to_timeline(timespec.next_time_from_now(), action)
         self._add_action_to_timeline(timespec.next_time_from(nowtime), action)
 
-    def remove_timespec_action(self, id: str):
-        for alarm in self._timeline:
+    def remove_timespec_action(self, id):
+        """Removes a TimeSpaceAction from the Clock's timeline
+            Parameters:
+                :param str id: The ID of the TimeSpecAction
+        """
+        for alarm in self.timeline:
             for pos, action in enumerate(alarm.actions):
                 if action.id == id:
                     print("found timespec action: {}".format(id))
                     alarm.actions.remove(action)
+            if len(alarm.actions) == 0:
+                self._timeline.remove(alarm)
+
+    @property
+    def timeline(self):
+        """
+        :rtype: list[ClockAlarm]
+        """
+        return self._timeline
 
     # ~~~~~~~~~~~~~~~~~~~~
     #   Private methods
     # ~~~~~~~~~~~~~~~~~~~~
 
-    # Override of Fiber base class.  Called by async Fiber.async_run()
     async def _async_run(self):
-
+        """Override of Fiber base class.  Called by async Fiber.async_run()
+        """
         # Start the _tick() loop
         while self._running:
             await self._async_tick(utcnow())                          # Execute tick

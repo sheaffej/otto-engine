@@ -19,18 +19,18 @@ class TestClock(unittest.TestCase):
         self.loop = asyncio.get_event_loop()
         self.clock = clock.EngineClock(TZ, loop=self.loop)
 
-    def test_basic(self):
+    def test_basic_tick(self):
+        """Test the tick mechanism, to ensure it executes a TimeSpec at the right time.
+        """
         trig = {
             "tz": TZ
         }
-
-        nowtime = datetime.datetime(2018, 5, 8, hour=21, minute=38, second=0, tzinfo=pytz.utc)
-        print("nowtime: {}".format(nowtime.astimezone(pytz.timezone(TZ))))
-
+        nowtime = parser.parse("2018-05-08 21:38:00-00:00")
         spec = clock.TimeSpec.from_dict(trig)
-        print("TimeSpec: {}".format(spec.serialize()))
-
         nexttime = spec.next_time_from(nowtime)
+
+        print("nowtime: {}".format(nowtime.astimezone(pytz.timezone(TZ))))
+        print("TimeSpec: {}".format(spec.serialize()))
         print("nextime: {}".format(nexttime))
 
         self.action_count = 0
@@ -54,12 +54,39 @@ class TestClock(unittest.TestCase):
         print(nexttime.astimezone(pytz.utc))
         self.assertTrue(self.exec_time == nexttime)
 
+    def test_remove_action(self):
+        """Tests the removal of a TimeSpec from the timeline
+        """
+        spec = clock.TimeSpec.from_dict({"tz": "UTC"})
+        spec_id = uuid.uuid4()
+        self.clock.add_timespec_action(
+            id=spec_id,
+            action_function=None,
+            timespec=spec,
+            nowtime=datetime.datetime.now()
+        )
+
+        # Add the TimeSpecAction
+        self.assertEqual(len(self.clock.timeline), 1)
+        actual_id = self.clock.timeline[0].actions[0].id
+        print("Expected: {}, Actual: {}".format(spec_id, actual_id))
+        self.assertEqual(actual_id, spec_id)
+
+        # Remove the TimeSpecAction
+        self.clock.remove_timespec_action(spec_id)
+        print(self.clock._format_timeline())
+        self.assertEqual(
+            len(self.clock.timeline), 0,
+            msg="Expecing an empty timeline, but it found non-empty")
+
 
 class TestTimeSpec(unittest.TestCase):
     def setUp(self):
         print()
 
     def test_next_time_from(self):
+        """Tests various TimeSpec definitions to ensure they calculate the correct next time
+        """
         # (TimeSpec, nowtime, nexttime)
         tests = [
             ({"tz": "UTC"},
@@ -99,6 +126,24 @@ class TestTimeSpec(unittest.TestCase):
             # Not a leap year
             ({"tz": "UTC"},
              parser.parse("2018-02-28 23:59:59-00:00"), parser.parse("2018-03-01 00:00:00-00:00")),
+
+            # Only July 4th at 9:30am
+            ({"tz": "UTC", "second": 0, "minute": 30, "hour": 9, "day_of_month": 4, "month": 7},
+             parser.parse("2018-01-01 00:00:00-00:00"), parser.parse("2018-07-04 09:30:00-00:00")),
+
+            # Only Fri, Sat, Sun at 8:30a
+            ({"tz": "UTC", "second": 0, "minute": 30, "hour": 8, "weekdays": "5,6,7"},
+             parser.parse("2018-01-01 00:00:00-00:00"), parser.parse("2018-01-05 08:30:00-00:00")),
+            ({"tz": "UTC", "second": 0, "minute": 30, "hour": 8, "weekdays": "5,6,7"},
+             parser.parse("2018-01-05 08:30:01-00:00"), parser.parse("2018-01-06 08:30:00-00:00")),
+            ({"tz": "UTC", "second": 0, "minute": 30, "hour": 8, "weekdays": "5,6,7"},
+             parser.parse("2018-01-06 08:30:01-00:00"), parser.parse("2018-01-07 08:30:00-00:00")),
+            ({"tz": "UTC", "second": 0, "minute": 30, "hour": 8, "weekdays": "5,6,7"},
+             parser.parse("2018-01-07 08:30:01-00:00"), parser.parse("2018-01-12 08:30:00-00:00")),
+
+            # Midnight UTC
+            ({"tz": "UTC", "hour": 0, "minute": 0, "second": 0},
+             parser.parse("2018-05-15 08:01:10-00:00"), parser.parse("2018-05-16 00:00:00-00:00")),
         ]
 
         for specdict, nowtime, nexttime in tests:
