@@ -5,7 +5,7 @@ from ottoengine.model import action_objects, trigger_objects
 
 
 _LOG = logging.getLogger(__name__)
-_LOG.setLevel(logging.DEBUG)
+# _LOG.setLevel(logging.DEBUG)
 
 
 class AutomationRule(object):

@@ -5,7 +5,7 @@ import logging
 from ottoengine.fibers import Fiber
 
 _LOG = logging.getLogger(__name__)
-_LOG.setLevel(logging.DEBUG)
+# _LOG.setLevel(logging.DEBUG)
 
 
 class TestWebSocketServer(Fiber):

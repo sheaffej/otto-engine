@@ -13,18 +13,13 @@ from ottoengine.model import dataobjects
 ASYNC_TIMEOUT_SECS = 5
 
 _LOG = logging.getLogger(__name__)
-_LOG.setLevel(logging.DEBUG)
+# _LOG.setLevel(logging.DEBUG)
 
 
 class OttoEngine(object):
 
     def __init__(self, config: config.EngineConfig):
         self._config = config
-        # self._hass_host = config.hass_host
-        # self._hass_port = config.hass_port
-        # self._hass_password = config.hass_password
-        # self._hass_ssl = config.hass_ssl
-
         self._loop = asyncio.get_event_loop()
         self._states = state.OttoEngineState()
         self._persistence_mgr = persistence.PersistenceManager(self, self._config.json_rules_dir)
@@ -37,13 +32,164 @@ class OttoEngine(object):
         self._event_listeners = {}     # Provide a way to lookup listeners by event_type
         self._time_listeners = []      # Just keeps track of the IDs so we can remove during reload
 
+    # ~~~~~~~~~~~~~~~~~~~~~~~~
+    #   Engine's Public API
+    # ~~~~~~~~~~~~~~~~~~~~~~~~
+
     @property
     def states(self):
         return self._states
 
-    #########################
-    #    Private methods    #
-    #########################
+    def start_engine(self):
+        '''Starts the Otto Engine until it is shutdown'''
+
+        # Setup signal handlers
+        self._loop.add_signal_handler(signal.SIGINT, self._stop_engine)
+        self._loop.add_signal_handler(signal.SIGTERM, self._stop_engine)
+
+        # Start the event loop
+        try:
+            _LOG.info("Starting event loop")
+            self._loop.call_soon(
+                self._states.set_engine_state, "start_time", datetime.datetime.now())
+            self.schedule_task(self._async_setup_engine())
+            self._loop.run_forever()
+        finally:
+            _LOG.info("Shutting down OttoEngine")
+            self._loop.close()
+
+    def process_event(self, event):
+        ''' Process an event received by the websocket fiber '''
+        if type(event) is dataobjects.StateChangedEvent:
+            # Update the state
+            self._states.set_entity_state(event.entity_id, event.new_state_obj)
+
+            _LOG.debug("[Event] entity_id: {}, new_state: {}, attributes: {}".format(
+                event.entity_id, event.new_state_obj.state, event.new_state_obj.attributes))
+
+            # Trigger any listeners
+            listeners = self._state_listeners.get(event.entity_id)
+            if listeners is not None:
+                for listener in listeners:
+                    _LOG.info(
+                        "Invoking trigger - rule: {}, entity: {}".format(
+                            listener.rule_id, event.entity_id))
+                    # The trigger_function is a reference to an async_handle_trigger() function
+                    # created from AutomationRule.get_event_listeners()
+                    self.schedule_task(listener.trigger_function(event))
+
+        elif type(event) is dataobjects.HassEvent:
+
+            _LOG.debug(
+                "[Event] event_type: {}, event_data: {}".format(event.event_type, event.data_obj))
+
+            listeners = self._event_listeners.get(event.event_type)
+            if listeners is not None:
+                for listener in listeners:
+                    _LOG.info(
+                        "Invoking trigger - rule: {}, event_type: {}".format(
+                            listener.rule_id, event.event_type))
+                    # The trigger_function is a reference to an async_handle_trigger() function
+                    # created from AutomationRule.get_event_listeners()
+                    self.schedule_task(listener.trigger_function(event))
+
+    def get_state_threadsafe(self, group, key):
+        '''Get state from engine.  This is called by threads outside of the event loop'''
+        _LOG.debug("get_state() called with - group: {}, key: {}".format(group, key))
+        future = asyncio.run_coroutine_threadsafe(self._async_get_state(group, key), self._loop)
+        result = future.result(ASYNC_TIMEOUT_SECS)  # Wait for the result with a timeout
+        return result
+
+    def call_service_threadsafe(self, service_call):
+        asyncio.run_coroutine_threadsafe(self.async_call_service(service_call), self._loop)
+
+    def call_service(self, service_call):
+        # await self._websocket.async_call_service(service_call)
+        self.schedule_task(self._websocket.async_call_service(service_call))
+
+    def schedule_task(self, coro) -> asyncio.Task:
+        return self._loop.create_task(coro)
+
+    def get_rules(self) -> list:
+        async def _async_get_rules():
+            return self.states.get_rules()
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_rules(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_rule(self, rule_id) -> dict:
+        async def _async_get_rule(rule_id):
+            return self.states.get_rule(rule_id)
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def save_rule(self, rule_dict):
+        async def _async_save_rule(rule_dict):
+            '''
+            Returns { success: True } if successful,
+            or { success: False, message: message } if unsuccessful.
+            '''
+            result = self._persistence_mgr.rule_from_dict(rule_dict)
+            if not result.get("success"):
+                return result
+
+            rule = result.get("rule")
+            try:
+                self._persistence_mgr.save_rule(rule)
+            except Exception as e:
+                message = "Exception saving rule: {}: {}".format(
+                    sys.exc_info()[0], sys.exc_info()[1])
+                _LOG.error(message)
+                traceback.print_exc()
+                return {"success": False, "message": message}
+
+            self.states.add_rule(rule)  # This will overwrite any previous rule with this ID
+            return {"success": True}
+
+        return asyncio.run_coroutine_threadsafe(
+            _async_save_rule(rule_dict), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def delete_rule(self, rule_id) -> bool:
+        async def _async_delete_rule(rule_id):
+            return self._persistence_mgr.delete_rule(rule_id)
+        return asyncio.run_coroutine_threadsafe(
+            _async_delete_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_entities(self) -> list:
+        async def _async_get_entites():
+            return self.states.get_entities()
+
+        future = asyncio.run_coroutine_threadsafe(_async_get_entites(), self._loop)
+        return future.result(ASYNC_TIMEOUT_SECS)
+
+    def get_services(self) -> list:
+        async def _async_get_services():
+            return self.states.get_services()
+
+        future = asyncio.run_coroutine_threadsafe(_async_get_services(), self._loop)
+        return future.result(ASYNC_TIMEOUT_SECS)
+
+    def reload_rules(self) -> bool:
+        future = asyncio.run_coroutine_threadsafe(self._async_reload_rules(), self._loop)
+        return future.result(ASYNC_TIMEOUT_SECS)
+
+    def websocket_fiber_ending(self):
+        _LOG.warn("Websocket Fiber has ended...restarting Engine setup")
+        self.schedule_task(self._async_setup_engine())
+
+    def check_timespec(self, spec_dict):
+        try:
+            spec = clock.TimeSpec.from_dict(spec_dict)
+            next_time = spec.next_time_from_now().isoformat()
+        except Exception as e:
+            message = "Exception checking TimeSpec: {}".format(sys.exc_info()[1])
+            message += " || Spec: {}".format(spec_dict)
+            _LOG.error(message)
+            return {"success": False, "message": message}
+        return {"success": True, "next_time": next_time}
+
+    # ~~~~~~~~~~~~~~~~~~~~
+    #   Private methods
+    # ~~~~~~~~~~~~~~~~~~~~
 
     def _stop_engine(self):
         '''Gracefully stop the engine'''
@@ -53,10 +199,6 @@ class OttoEngine(object):
     def _run_fiber(self, fiber) -> None:
         task = self.schedule_task(fiber.async_run())
         fiber.asyncio_task = task
-
-    #############################
-    #    Private corroutines    #
-    #############################
 
     async def _async_setup_engine(self):
 
@@ -172,153 +314,3 @@ class OttoEngine(object):
             "_async_set_state() called with - group: {}, key: {}, value: {}".format(
                 group, key, value))
         self._states.get_state(group, key, value)
-
-    ###########################################################################
-    #                          Engine's Public API                            #
-    ###########################################################################
-
-    def start_engine(self):
-        '''Starts the Otto Engine until it is shutdown'''
-
-        # Setup signal handlers
-        self._loop.add_signal_handler(signal.SIGINT, self._stop_engine)
-        self._loop.add_signal_handler(signal.SIGTERM, self._stop_engine)
-
-        # Start the event loop
-        try:
-            _LOG.info("Starting event loop")
-            self._loop.call_soon(
-                self._states.set_engine_state, "start_time", datetime.datetime.now())
-            self.schedule_task(self._async_setup_engine())
-            self._loop.run_forever()
-        finally:
-            _LOG.info("Shutting down OttoEngine")
-            self._loop.close()
-
-    def process_event(self, event):
-        ''' Process an event received by the websocket fiber '''
-        if type(event) is dataobjects.StateChangedEvent:
-            # Update the state
-            self._states.set_entity_state(event.entity_id, event.new_state_obj)
-
-            _LOG.debug("[Event] entity_id: {}, new_state: {}, attributes: {}".format(
-                event.entity_id, event.new_state_obj.state, event.new_state_obj.attributes))
-
-            # Trigger any listeners
-            listeners = self._state_listeners.get(event.entity_id)
-            if listeners is not None:
-                for listener in listeners:
-                    _LOG.info(
-                        "Invoking trigger - rule: {}, entity: {}".format(
-                            listener.rule_id, event.entity_id))
-                    # The trigger_function is a reference to an async_handle_trigger() function
-                    # created from AutomationRule.get_event_listeners()
-                    self.schedule_task(listener.trigger_function(event))
-
-        elif type(event) is dataobjects.HassEvent:
-
-            _LOG.debug(
-                "[Event] event_type: {}, event_data: {}".format(event.event_type, event.data_obj))
-
-            listeners = self._event_listeners.get(event.event_type)
-            if listeners is not None:
-                for listener in listeners:
-                    _LOG.info(
-                        "Invoking trigger - rule: {}, event_type: {}".format(
-                            listener.rule_id, event.event_type))
-                    # The trigger_function is a reference to an async_handle_trigger() function
-                    # created from AutomationRule.get_event_listeners()
-                    self.schedule_task(listener.trigger_function(event))
-
-    def get_state_threadsafe(self, group, key):
-        '''Get state from engine.  This is called by threads outside of the event loop'''
-        _LOG.debug("get_state() called with - group: {}, key: {}".format(group, key))
-        future = asyncio.run_coroutine_threadsafe(self._async_get_state(group, key), self._loop)
-        result = future.result(ASYNC_TIMEOUT_SECS)  # Wait for the result with a timeout
-        return result
-
-    def call_service_threadsafe(self, service_call):
-        asyncio.run_coroutine_threadsafe(self.async_call_service(service_call), self._loop)
-
-    async def async_call_service(self, service_call):
-        await self._websocket.async_call_service(service_call)
-
-    def schedule_task(self, coro) -> asyncio.Task:
-        return self._loop.create_task(coro)
-
-    def get_rules(self) -> list:
-        async def _async_get_rules():
-            return self.states.get_rules()
-        return asyncio.run_coroutine_threadsafe(
-            _async_get_rules(), self._loop).result(ASYNC_TIMEOUT_SECS)
-
-    def get_rule(self, rule_id) -> dict:
-        async def _async_get_rule(rule_id):
-            return self.states.get_rule(rule_id)
-        return asyncio.run_coroutine_threadsafe(
-            _async_get_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
-
-    def save_rule(self, rule_dict):
-        async def _async_save_rule(rule_dict):
-            '''
-            Returns { success: True } if successful,
-            or { success: False, message: message } if unsuccessful.
-            '''
-            result = self._persistence_mgr.rule_from_dict(rule_dict)
-            if not result.get("success"):
-                return result
-
-            rule = result.get("rule")
-            try:
-                self._persistence_mgr.save_rule(rule)
-            except Exception as e:
-                message = "Exception saving rule: {}: {}".format(
-                    sys.exc_info()[0], sys.exc_info()[1])
-                _LOG.error(message)
-                traceback.print_exc()
-                return {"success": False, "message": message}
-
-            self.states.add_rule(rule)  # This will overwrite any previous rule with this ID
-            return {"success": True}
-
-        return asyncio.run_coroutine_threadsafe(
-            _async_save_rule(rule_dict), self._loop).result(ASYNC_TIMEOUT_SECS)
-
-    def delete_rule(self, rule_id) -> bool:
-        async def _async_delete_rule(rule_id):
-            return self._persistence_mgr.delete_rule(rule_id)
-        return asyncio.run_coroutine_threadsafe(
-            _async_delete_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
-
-    def get_entities(self) -> list:
-        async def _async_get_entites():
-            return self.states.get_entities()
-
-        future = asyncio.run_coroutine_threadsafe(_async_get_entites(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def get_services(self) -> list:
-        async def _async_get_services():
-            return self.states.get_services()
-
-        future = asyncio.run_coroutine_threadsafe(_async_get_services(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def reload_rules(self) -> bool:
-        future = asyncio.run_coroutine_threadsafe(self._async_reload_rules(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def websocket_fiber_ending(self):
-        _LOG.warn("Websocket Fiber has ended...restarting Engine setup")
-        self.schedule_task(self._async_setup_engine())
-
-    def check_timespec(self, spec_dict):
-        try:
-            spec = clock.TimeSpec.from_dict(spec_dict)
-            next_time = spec.next_time_from_now().isoformat()
-        except Exception as e:
-            message = "Exception checking TimeSpec: {}".format(sys.exc_info()[1])
-            message += " || Spec: {}".format(spec_dict)
-            _LOG.error(message)
-            return {"success": False, "message": message}
-        return {"success": True, "next_time": next_time}

@@ -12,7 +12,7 @@ ATTR_CONDITION = "condition"
 ATTR_ENTITY_ID = "entity_id"
 
 _LOG = logging.getLogger(__name__)
-_LOG.setLevel(logging.DEBUG)
+# _LOG.setLevel(logging.DEBUG)
 
 
 class RuleCondition(object):

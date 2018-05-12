@@ -5,7 +5,7 @@ from ottoengine import const, helpers
 from ottoengine.model import dataobjects
 
 _LOG = logging.getLogger(__name__)
-_LOG.setLevel(logging.DEBUG)
+# _LOG.setLevel(logging.DEBUG)
 
 
 class RuleActionItem(object):
@@ -48,7 +48,7 @@ class ServiceAction(RuleActionItem):
         _LOG.info("Service called - domain: {}, service: {}, data: {}".format(
             self._domain, self._service, self._data_dict)
         )
-        await engine.async_call_service(
+        engine.call_service(
             dataobjects.ServiceCall(self._domain, self._service, self._data_dict)
         )
         return True

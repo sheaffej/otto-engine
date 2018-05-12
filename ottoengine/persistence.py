@@ -7,7 +7,7 @@ import traceback
 from ottoengine.model import rule_objects, trigger_objects, condition_objects, action_objects
 
 _LOG = logging.getLogger(__name__)
-_LOG.setLevel(logging.DEBUG)
+# _LOG.setLevel(logging.DEBUG)
 
 BACKEND_FILE = 'file'
 BACKEND_MYSQL = 'mysql'
