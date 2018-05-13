@@ -38,6 +38,9 @@ class PersistenceManager:
         self._engine = engine_obj
         self._json_rules_dir = json_rules_dir
 
+        if not os.path.exists(self._json_rules_dir):
+            os.makedirs(self._json_rules_dir)
+
     # ~~~~~~~~~~~~~~
     # Public methods
     # ~~~~~~~~~~~~~~

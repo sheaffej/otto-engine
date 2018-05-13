@@ -9,10 +9,10 @@ from ottoengine import engine, restapi, config
 # Load the config
 try:
     config = config.EngineConfig()
-except Exception:
+except Exception as e:
     print("Error encountered loading configuration file")
+    print("{} {}".format(sys.exc_info()[0], sys.exc_info()[1]))
     sys.exit(1)
-
 
 # Setup the logging
 _LOG = logging.getLogger("run_otto")
@@ -47,7 +47,6 @@ except ImportError:
 
 # Initialize the engine
 engine = engine.OttoEngine(config)
-# persistence.JSON_RULES_DIR = config.JSON_RULES_DIR
 
 # Start the Flask web server
 _LOG.info("Starting web thread")
@@ -57,7 +56,6 @@ web_thread.start()
 
 # Start the engine's BaseLoop
 engine.start_engine()
-
 
 # Shutdown the webui
 urllib.request.urlopen("http://localhost:{}/shutdown".format(config.rest_port))

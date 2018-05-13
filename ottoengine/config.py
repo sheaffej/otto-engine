@@ -39,9 +39,9 @@ class EngineConfig:
         self._read_parameters()
 
     def _get(self, section: str, key: str, required: bool = False):
-        if not self._config[section][key.lower()]:
+        if key.lower() not in self._config[section]:
             if required:
-                logging.error(
+                print(
                     "Missing required config in {}: section ({}), key ({})".format(
                         self._config_file, section, key))
                 raise KeyError("Key [{}] {} not found".format(section, key))
@@ -82,7 +82,7 @@ class EngineConfig:
         else:
             self.log_level = logging.INFO
 
-        self._test_websocket_port = _parse_int(self._get("ENGINE", "TEST_WEBSOCKET_PORT"))
+        self.test_websocket_port = _parse_int(self._get("ENGINE", "TEST_WEBSOCKET_PORT"))
 
     def print_config(self):
         for section in self._config.sections():

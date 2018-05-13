@@ -13,7 +13,7 @@ from ottoengine.testing import websocket_helpers, restapi_helpers
 
 
 WSHOST = "localhost"
-WSPORT = 8000
+WSPORT = 8123
 RESTHOST = "localhost"
 RESTPORT = 5000
 

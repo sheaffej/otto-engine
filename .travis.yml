@@ -1,0 +1,20 @@
+language: python
+
+python:
+  - "3.6"
+
+before_script:
+  - export PYTHONPATH=$PYTHONPATH:$(pwd)
+  - cp config.ini.example config.ini
+  - echo "TEST_WEBSOCKET_PORT = 8123" >> config.ini
+
+script: 
+  - python run_otto.py &> otto_engine.log &
+  - sleep 5 # Wait for otto-engine to connect to the TestWebSocketServer
+  - pytest -v tests/
+  - pkill -9 -f run_otto.py
+
+after_script:
+  # - echo "travis_fold:start:OTTO_LOG"
+  - cat otto_engine.log
+  # - echo "travis_fold:end:OTTO_LOG"

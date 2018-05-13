@@ -7,6 +7,8 @@ from ottoengine.fibers import Fiber
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
 
+HOST = "localhost"
+
 
 class TestWebSocketServer(Fiber):
     def __init__(self, port):
@@ -17,7 +19,8 @@ class TestWebSocketServer(Fiber):
 
     async def _async_run(self):
         try:
-            await asyncws.start_server(self._echo, '127.0.0.1', self._port)
+            _LOG.info("TestWebSocketServer starting on {}:{}".format(HOST, self._port))
+            await asyncws.start_server(self._echo, HOST, self._port)
         except OSError as e:
             if e.errno == 48:
                 _LOG.error(

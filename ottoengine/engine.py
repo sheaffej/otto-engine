@@ -154,6 +154,10 @@ class OttoEngine(object):
         return asyncio.run_coroutine_threadsafe(
             _async_delete_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
 
+    def reload_rules(self) -> bool:
+        future = asyncio.run_coroutine_threadsafe(self._async_reload_rules(), self._loop)
+        return future.result(ASYNC_TIMEOUT_SECS)
+
     def get_entities(self) -> list:
         async def _async_get_entites():
             return self.states.get_entities()
@@ -166,10 +170,6 @@ class OttoEngine(object):
             return self.states.get_services()
 
         future = asyncio.run_coroutine_threadsafe(_async_get_services(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def reload_rules(self) -> bool:
-        future = asyncio.run_coroutine_threadsafe(self._async_reload_rules(), self._loop)
         return future.result(ASYNC_TIMEOUT_SECS)
 
     def websocket_fiber_ending(self):
