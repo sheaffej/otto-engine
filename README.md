@@ -1,4 +1,4 @@
-# `otto-engine`
+# `otto-engine` ![](https://travis-ci.org/sheaffej/otto-engine.svg?branch=master)
 
 An automation engine for [Home Assistant](https://www.home-assistant.io/).
 
