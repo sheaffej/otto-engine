@@ -3,6 +3,10 @@ language: python
 python:
   - "3.6"
 
+install:
+  - pip install -r requirements.txt
+  - pip install pytest-cov coveralls
+
 before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)
   - cp config.ini.example config.ini
@@ -11,7 +15,7 @@ before_script:
 script: 
   - python run_otto.py &> otto_engine.log &
   - sleep 5 # Wait for otto-engine to connect to the TestWebSocketServer
-  - pytest -v tests/
+  - pytest -v --cov=ottoengine tests/
   - pkill -9 -f run_otto.py
 
 after_script:

@@ -10,7 +10,7 @@ echo "Starting otto-engine ["$(date)"]"
 ./run_otto.py &> /dev/null &
 echo
 
-${PYTEST} tests/
+${PYTEST} --cov=ottoengine tests/
 
 echo
 echo "Stopping otto-engine ["$(date)"]"

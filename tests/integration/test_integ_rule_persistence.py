@@ -200,7 +200,7 @@ class TestRulePersistence(unittest.TestCase):
                 try:
                     json_rule = json.load(open(filename))
                 except Exception as e:
-                    print("Error loading rule file: {}: {}".format(str(e)))
+                    print("Error loading rule file: {}".format(str(e)))
                 self.assertIsNotNone(json_rule)
 
                 rule_id = json_rule["id"]
