@@ -18,7 +18,6 @@ packaging==16.8
 pluggy==0.6.0
 py==1.5.3
 pyparsing==2.2.0
-pytest==3.5.1
 python-dateutil==2.6.0
 pytz==2017.2
 requests==2.18.4
