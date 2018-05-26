@@ -1,7 +1,5 @@
 #!/bin/bash
 
-PYTEST="pytest -v --cache-clear"
-
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
@@ -10,7 +8,7 @@ echo "Starting otto-engine ["$(date)"]"
 ./run_otto.py &> /dev/null &
 echo
 
-${PYTEST} --cov=ottoengine tests/
+pytest -v --cache-clear --cov=ottoengine tests/
 
 echo
 echo "Stopping otto-engine ["$(date)"]"

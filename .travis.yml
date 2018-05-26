@@ -19,6 +19,5 @@ script:
   - pkill -9 -f run_otto.py
 
 after_script:
-  # - echo "travis_fold:start:OTTO_LOG"
+  - coveralls
   - cat otto_engine.log
-  # - echo "travis_fold:end:OTTO_LOG"
