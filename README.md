@@ -98,6 +98,6 @@ When designing the rule schema, there were a few things I wanted rules to be abl
 * I wanted to be able to create, test, modify, enable/disable, and delete rules without restarting Home Assistant.
 * I wanted to have a UI to create, view, and modify the rules
 
-Rules are created, modified, and viewed over a REST API. I have a complementary project called `otto-ui` which is a web-based UI to work with the rules. The `otto-ui` project is built with Angular 2 / TypeScript. That project is private because I have some private configuration details still hard-coded into it. But I plan to release that as a public repository also in the future.
+Rules are created, modified, and viewed over a REST API. I have a complementary project called [`otto-ui`](https://github.com/sheaffej/otto-ui) which is a web-based UI to work with the rules. The `otto-ui` project is built with Angular 2 / TypeScript. That project is private because I have some private configuration details still hard-coded into it. But I plan to release that as a public repository also in the future.
 
 Rules are persisted as JSON files currently on the same file system that `otto-engine` is running. However the persistence module's API was designed to be persistence-neutral, and therefore can be extended to use other persistence engines (like MySQL,  MongoDB, or Elasticsearch). 
