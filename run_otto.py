@@ -44,6 +44,11 @@ except ImportError:
     print("Failed to import colorlog module")
     sys.exit(1)
 
+# Set Test Websocket to Start if needed
+if len(sys.argv) > 1:
+    if sys.argv[1].lower() == 'test':
+        _LOG.info("Test Websocket server requested by command-line option")
+        config.test_websocket_port = 8123
 
 # Initialize the engine
 engine = engine.OttoEngine(config)

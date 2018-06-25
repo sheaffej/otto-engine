@@ -5,7 +5,7 @@ cd $DIR/..
 
 echo
 echo "Starting otto-engine ["$(date)"]"
-./run_otto.py &> /dev/null &
+./run_otto.py test &> /dev/null &
 echo
 
 pytest -v --cache-clear --cov=ottoengine tests/

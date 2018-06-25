@@ -26,7 +26,7 @@ class EngineConfig:
         self._config = None
 
         self.rest_port = 5000
-        self.test_websocket_port = 8000
+        self.test_websocket_port = None  # Normally the HA port 8123
         self.hass_host = "localhost"
         self.hass_port = 8123
         self.hass_password = None
