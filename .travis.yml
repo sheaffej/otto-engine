@@ -10,10 +10,10 @@ install:
 before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)
   - cp config.ini.example config.ini
-  - echo "TEST_WEBSOCKET_PORT = 8123" >> config.ini
+  # - echo "TEST_WEBSOCKET_PORT = 8123" >> config.ini
 
 script: 
-  - python run_otto.py &> otto_engine.log &
+  - python run_otto.py test &> otto_engine.log &
   - sleep 5 # Wait for otto-engine to connect to the TestWebSocketServer
   - pytest -v --cov=ottoengine tests/
   - pkill -9 -f run_otto.py
