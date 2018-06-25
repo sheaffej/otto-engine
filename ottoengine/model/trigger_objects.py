@@ -93,18 +93,10 @@ class StateTrigger(RuleTrigger):
                         run = True
 
                 # Check to make sure the state actually changed
-                # This should not be necessary, since Hass should only send a state_changed
-                # event if the state actually changed
                 if (event_obj.old_state_obj.state == event_obj.new_state_obj.state):
+                    # This can happen if the metadata about a state changed,
+                    # but the main state value has not changed
                     run = False
-                    _LOG.warn(
-                        "StateTrigger fired, but state hasn't actually changed - " +
-                        "entity_id: {}, old_state: {}, new_state: {}".format(
-                            event_obj.entity_id,
-                            event_obj.old_state_obj.state,
-                            event_obj.new_state_obj.state
-                        )
-                    )
 
         _LOG.debug("eval result = {}".format(run))
         return run
