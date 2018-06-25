@@ -192,24 +192,27 @@ class TestRulePersistence(unittest.TestCase):
 
         for file in os.listdir(json_test_rules_dir):
             print(file)
-
-            if file.endswith("json"):
-                filename = os.path.join(json_test_rules_dir, file)
-                print("Found rule file: {}".format(filename))
-
-                try:
-                    json_rule = json.load(open(filename))
-                except Exception as e:
-                    print("Error loading rule file: {}".format(str(e)))
-                self.assertIsNotNone(json_rule)
-
-                rule_id = json_rule["id"]
-                restapi_helpers.put_rule(self, RESTURL, json_rule)
-                restapi_helpers.get_rule(self, RESTURL, rule_id)
-                restapi_helpers.delete_rule(self, RESTURL, rule_id)
+            self._load_test_json_file(file, json_test_rules_dir)
 
         # Reload rules to clear out past rules
         restapi_helpers.reload_rules(self, RESTURL)
+
+    def _load_test_json_file(self, file, rules_dir):
+
+        if file.endswith("json"):
+            filename = os.path.join(rules_dir, file)
+            print("Found rule file: {}".format(filename))
+
+            try:
+                json_rule = json.load(open(filename))
+            except Exception as e:
+                print("Error loading rule file: {}".format(str(e)))
+            self.assertIsNotNone(json_rule)
+
+            rule_id = json_rule["id"]
+            restapi_helpers.put_rule(self, RESTURL, json_rule)
+            restapi_helpers.get_rule(self, RESTURL, rule_id)
+            restapi_helpers.delete_rule(self, RESTURL, rule_id)
 
 
 if __name__ == "__main__":
