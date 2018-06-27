@@ -194,7 +194,6 @@ class EngineClock (fibers.Fiber):
         for alarm in self.timeline:
             for pos, action in enumerate(alarm.actions):
                 if action.id == id:
-                    print("found timespec action: {}".format(id))
                     alarm.actions.remove(action)
             if len(alarm.actions) == 0:
                 self._timeline.remove(alarm)

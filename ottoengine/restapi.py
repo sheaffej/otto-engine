@@ -1,13 +1,15 @@
 import flask
 import flask_cors
 import json
-
-# from ottoengine.model import dataobjects
+import logging
 
 
 app = flask.Flask(__name__)
 flask_cors.CORS(app)    # Allow all cross-origin requests
 engine = None
+
+_LOG = logging.getLogger(__name__)
+# _LOG.setLevel(logging.DEBUG)
 
 
 def run_server():
@@ -97,9 +99,8 @@ def rule(rule_id=None):
 
     if flask.request.method == 'GET':
         """Return the rule with ID <rule_id>"""
-        print("GET for rule {}".format(rule_id))
+        _LOG.info("GET for rule {}".format(rule_id))
         rule = engine.get_rule(rule_id)
-        # print(rule)
         if rule is None:
             resp = json.dumps({
                 "success": False,
@@ -116,11 +117,10 @@ def rule(rule_id=None):
 
     if flask.request.method == 'PUT':
         """Store the rule as ID <rule_id>"""
-        print("PUT for rule {}".format(rule_id))
-        print(flask.request.data)
+        _LOG.info("PUT for rule {}".format(rule_id))
+        _LOG.debug(flask.request.data)
 
         data = flask.request.get_json().get("data")
-        print(data)
 
         result = engine.save_rule(data)
 
@@ -142,7 +142,7 @@ def rule(rule_id=None):
 
     if flask.request.method == 'DELETE':
         """Delete rule with ID <rule_id>"""
-        print("DELETE for rule {}".format(rule_id))
+        _LOG.info("DELETE for rule {}".format(rule_id))
         success = engine.delete_rule(rule_id)
         return json.dumps({
             "success": success,
@@ -151,7 +151,7 @@ def rule(rule_id=None):
 
     else:
         # POST Error 405 Method Not Allowed
-        print("ERROR: {}".format(flask.request.print))
+        _LOG.error("ERROR: {}".format(flask.request.print))
 
     return resp
 
@@ -159,7 +159,7 @@ def rule(rule_id=None):
 @app.route('/rest/clock/check', methods=['PUT'])
 def clock_check():
     spec = flask.request.get_json().get('data')
-    print(spec)
+    _LOG.info(spec)
     result = engine.check_timespec(spec)
 
     success = result.get("success")
