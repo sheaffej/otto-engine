@@ -191,7 +191,16 @@ class TestRulePersistence(unittest.TestCase):
         json_test_rules_dir = os.path.join(mydir, "../json_test_rules")
 
         for file in os.listdir(json_test_rules_dir):
-            print(file)
+            self._load_test_json_file(file, json_test_rules_dir)
+
+        # Reload rules to clear out past rules
+        restapi_helpers.reload_rules(self, RESTURL)
+
+    def test_A_load_realworld_rules_from_dir(self):
+        mydir = os.path.dirname(__file__)
+        json_test_rules_dir = os.path.join(mydir, "../json_realworld_rules")
+
+        for file in os.listdir(json_test_rules_dir):
             self._load_test_json_file(file, json_test_rules_dir)
 
         # Reload rules to clear out past rules
@@ -200,6 +209,7 @@ class TestRulePersistence(unittest.TestCase):
     def _load_test_json_file(self, file, rules_dir):
 
         if file.endswith("json"):
+            print()
             filename = os.path.join(rules_dir, file)
             print("Found rule file: {}".format(filename))
 

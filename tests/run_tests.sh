@@ -5,9 +5,12 @@ cd $DIR/..
 
 echo
 echo "Starting otto-engine ["$(date)"]"
-./run_otto.py test &> /dev/null &
-echo
+./run_otto.py test &> run_otto.log &
 
+# Let async engine setup complete before proceeding
+sleep 1
+
+echo
 pytest -v --cache-clear --cov=ottoengine tests/
 
 echo

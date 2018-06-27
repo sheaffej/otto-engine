@@ -10,7 +10,6 @@ install:
 before_script:
   - export PYTHONPATH=$PYTHONPATH:$(pwd)
   - cp config.ini.example config.ini
-  # - echo "TEST_WEBSOCKET_PORT = 8123" >> config.ini
 
 script: 
   - python run_otto.py test &> otto_engine.log &

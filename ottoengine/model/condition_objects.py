@@ -5,7 +5,7 @@ import logging
 
 import pytz
 
-from ottoengine import config, helpers
+from ottoengine import helpers
 
 
 ATTR_CONDITION = "condition"
@@ -371,14 +371,14 @@ class TimeCondition(RuleCondition):
         self._tz_name = tz_name     # Default to config.TZ if not specified
 
         if self._tz_name is None:
-            self._tz_name = config.TZ
+            self._tz_name = "UTC"
 
         if not (self._after or self._before or self._weekday):
             raise helpers.ValidationError(
                 "TimeCondition: must specify one of: after, before, or weekday")
 
     @staticmethod
-    def from_dict(json):
+    def from_dict(json, config_tz):
         j = json
         # kwargs = {}
         # if "after" in j:
@@ -389,7 +389,7 @@ class TimeCondition(RuleCondition):
         #     kwargs["weekday"] = j.get("weekday")
         tz_name = j.get("tz")
         if tz_name is None:
-            tz_name = config.TZ
+            tz_name = config_tz
 
         return TimeCondition(
             helpers.hms_string_to_time(j.get("after"), tz_name),
@@ -439,8 +439,9 @@ class TimeCondition(RuleCondition):
         So if _before is earlier than _after, we can test for the inverse:
 
             C is NOT between _before and _after = True (within the period)
+
         """
-        now = datetime.datetime.now(tz=pytz.timezone(config.TZ))
+        now = datetime.datetime.now(tz=pytz.timezone(engine.config.tz))
         now_time = now.time()
 
         # Snap _after and _before to day's edges if not specified

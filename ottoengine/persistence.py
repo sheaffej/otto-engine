@@ -258,7 +258,7 @@ class PersistenceManager:
         elif "template" in j[ATTR_CONDITION]:
             cond = condition_objects.TemplateCondition.from_dict(j)
         elif "time" in j[ATTR_CONDITION]:
-            cond = condition_objects.TimeCondition.from_dict(j)
+            cond = condition_objects.TimeCondition.from_dict(j, self._engine._config.tz)
         elif "zone" in j[ATTR_CONDITION]:
             cond = condition_objects.ZoneCondition.from_dict(j)
         return cond
