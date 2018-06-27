@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+import pytz
 import signal
 import sys
 import traceback
@@ -268,7 +269,7 @@ class OttoEngine(object):
                         listener.rule_id, listener.timepsec.serialize()))
                 self._clock.add_timespec_action(
                     listener.listener_id, listener.trigger_function,
-                    listener.timepsec, datetime.datetime.now())
+                    listener.timepsec, datetime.datetime.now(pytz.utc))
                 self._time_listeners.append(listener.listener_id)
 
             # Add rule to State
