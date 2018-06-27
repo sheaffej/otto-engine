@@ -178,9 +178,10 @@ class OttoEngine(object):
         self.schedule_task(self._async_setup_engine())
 
     def check_timespec(self, spec_dict):
+        print("========== check_timespec =============")
         try:
             spec = clock.TimeSpec.from_dict(spec_dict)
-            next_time = spec.next_time_from_now().isoformat()
+            next_time = spec.next_time_from(datetime.datetime.now(pytz.utc)).isoformat()
         except Exception as e:
             message = "Exception checking TimeSpec: {}".format(sys.exc_info()[1])
             message += " || Spec: {}".format(spec_dict)

@@ -8,7 +8,7 @@ from ottoengine import engine, restapi, config
 
 # Load the config
 try:
-    config = config.EngineConfig()
+    config = config.EngineConfig().load()
 except Exception as e:
     print("Error encountered loading configuration file")
     print("{} {}".format(sys.exc_info()[0], sys.exc_info()[1]))
