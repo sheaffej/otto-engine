@@ -268,7 +268,7 @@ class OttoEngine(object):
                         listener.rule_id, listener.timepsec.serialize()))
                 self._clock.add_timespec_action(
                     listener.listener_id, listener.trigger_function,
-                    listener.timepsec, datetime.datetime.no())
+                    listener.timepsec, datetime.datetime.now())
                 self._time_listeners.append(listener.listener_id)
 
             # Add rule to State

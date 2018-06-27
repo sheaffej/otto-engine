@@ -221,6 +221,7 @@ class TestRulePersistence(unittest.TestCase):
 
             rule_id = json_rule["id"]
             restapi_helpers.put_rule(self, RESTURL, json_rule)
+            restapi_helpers.reload_rules(self, RESTURL)
             restapi_helpers.get_rule(self, RESTURL, rule_id)
             restapi_helpers.delete_rule(self, RESTURL, rule_id)
 
