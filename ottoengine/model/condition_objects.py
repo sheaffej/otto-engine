@@ -269,7 +269,7 @@ class SunCondition(RuleCondition):
 
     # Override
     def evaluate(self, engine) -> bool:
-        now = datetime.datetime.now()   # datetime.datetime
+        now = helpers.nowutc()  # datetime.datetime
 
         if self._before_offset is None:
             self._before_offset = datetime.timedelta(0)     # datetime.timedelta

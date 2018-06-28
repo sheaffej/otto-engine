@@ -18,10 +18,6 @@ TICK_INTERVAL_SECONDS = 1  # Number of seconds between ticks
 TICK_GRACE_SECONDS = 60
 
 
-def utcnow():
-    return datetime.datetime.now(pytz.utc)
-
-
 class TimeSpec(object):
 
     def __init__(

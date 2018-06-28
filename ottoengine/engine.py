@@ -8,6 +8,7 @@ import traceback
 
 from ottoengine import state, const, persistence, config
 from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
+from ottoengine import helpers
 from ottoengine.model import dataobjects
 
 
@@ -52,7 +53,7 @@ class OttoEngine(object):
         try:
             _LOG.info("Starting event loop")
             self._loop.call_soon(
-                self._states.set_engine_state, "start_time", datetime.datetime.now())
+                self._states.set_engine_state, "start_time", helpers.nowutc())
             self.schedule_task(self._async_setup_engine())
             self._loop.run_forever()
         finally:
@@ -180,7 +181,7 @@ class OttoEngine(object):
     def check_timespec(self, spec_dict):
         try:
             spec = clock.TimeSpec.from_dict(spec_dict)
-            next_time = spec.next_time_from(datetime.datetime.now(pytz.utc)).isoformat()
+            next_time = spec.next_time_from(helpers.nowutc()).isoformat()
         except Exception as e:
             message = "Exception checking TimeSpec: {}".format(sys.exc_info()[1])
             message += " || Spec: {}".format(spec_dict)
@@ -269,7 +270,7 @@ class OttoEngine(object):
                         listener.rule_id, listener.timepsec.serialize()))
                 self._clock.add_timespec_action(
                     listener.listener_id, listener.trigger_function,
-                    listener.timepsec, datetime.datetime.now(pytz.utc))
+                    listener.timepsec, nowtime())
                 self._time_listeners.append(listener.listener_id)
 
             # Add rule to State

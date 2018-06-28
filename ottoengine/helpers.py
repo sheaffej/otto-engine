@@ -1,6 +1,8 @@
 import datetime
 import pytz
 
+def nowutc() -> datetime.datetime:
+    return datetime.datetime.now(pytz.utc)
 
 def timedelta_to_dict(delta) -> dict:
     """

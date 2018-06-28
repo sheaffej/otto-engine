@@ -8,6 +8,7 @@ import unittest
 import uuid
 
 from ottoengine.fibers import clock
+from ottoengine.helpers import nowutc
 
 TZ = "America/Los_Angeles"
 
@@ -63,7 +64,7 @@ class TestClock(unittest.TestCase):
             id=spec_id,
             action_function=None,
             timespec=spec,
-            nowtime=datetime.datetime.now()
+            nowtime=nowutc()
         )
 
         # Add the TimeSpecAction
