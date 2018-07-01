@@ -1,7 +1,5 @@
 import asyncio
-import datetime
 import logging
-import pytz
 import signal
 import sys
 import traceback
@@ -28,7 +26,7 @@ class OttoEngine(object):
 
         self._websocket = None
         self._fiber_websocket_reader = None
-        self._clock = None
+        self._clock = clock.EngineClock(self._config.tz, loop=self._loop)
 
         self._state_listeners = {}     # Provide a way to lookup listeners by entity_id
         self._event_listeners = {}     # Provide a way to lookup listeners by event_type
@@ -231,7 +229,6 @@ class OttoEngine(object):
         await self._websocket.async_get_all_services()
 
         # Start the EngineClock
-        self._clock = clock.EngineClock(self._config.tz, loop=self._loop)
         self._run_fiber(self._clock)
 
         # Load the Automation Rules
@@ -270,7 +267,7 @@ class OttoEngine(object):
                         listener.rule_id, listener.timepsec.serialize()))
                 self._clock.add_timespec_action(
                     listener.listener_id, listener.trigger_function,
-                    listener.timepsec, nowtime())
+                    listener.timepsec, helpers.nowutc())
                 self._time_listeners.append(listener.listener_id)
 
             # Add rule to State

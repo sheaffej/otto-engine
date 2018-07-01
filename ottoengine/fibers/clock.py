@@ -210,7 +210,7 @@ class EngineClock (fibers.Fiber):
         """
         # Start the _tick() loop
         while self._running:
-            await self._async_tick(helpers.nowutc())                          # Execute tick
+            await self._async_tick(helpers.nowutc())    # Execute tick
             await asyncio.sleep(TICK_INTERVAL_SECONDS)  # Sleep until next tick
 
     async def _async_tick(self, utcnow):
