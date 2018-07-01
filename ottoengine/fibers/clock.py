@@ -4,7 +4,7 @@ import pytz
 import croniter
 import logging
 
-from ottoengine import fibers
+from ottoengine import fibers, helpers
 
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
@@ -210,7 +210,7 @@ class EngineClock (fibers.Fiber):
         """
         # Start the _tick() loop
         while self._running:
-            await self._async_tick(utcnow())                          # Execute tick
+            await self._async_tick(helpers.nowutc())                          # Execute tick
             await asyncio.sleep(TICK_INTERVAL_SECONDS)  # Sleep until next tick
 
     async def _async_tick(self, utcnow):
