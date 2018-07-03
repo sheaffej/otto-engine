@@ -1,8 +1,10 @@
 import datetime
 import pytz
 
+
 def nowutc() -> datetime.datetime:
     return datetime.datetime.now(pytz.utc)
+
 
 def timedelta_to_dict(delta) -> dict:
     """
@@ -64,7 +66,7 @@ def hms_string_to_timedelta(hms_string) -> datetime.timedelta:
     return datetime.timedelta(0, secs, 0)
 
 
-def hms_string_to_time(hms_string, tz_name) -> datetime.time:
+def hms_string_to_time(hms_string) -> datetime.time:
     """
         :param str hms_string:
         :rtype: datetime.time
@@ -73,13 +75,10 @@ def hms_string_to_time(hms_string, tz_name) -> datetime.time:
     if hms_string is None:
         return None
     parts = [int(s) for s in hms_string.split(":")]
-    # secs = (parts[0] * (3600)) + (parts[1] * 60) + parts[2]
-    # return datetime.timedelta(0, secs, 0)
     return datetime.time(
         hour=parts[0],
         minute=parts[1],
-        second=parts[2],
-        tzinfo=pytz.timezone(tz_name)
+        second=parts[2]
     )
 
 

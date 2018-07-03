@@ -1,12 +1,10 @@
 import datetime
 import dateutil.parser
-import numbers
 import logging
-
+import numbers
 import pytz
 
 from ottoengine import helpers
-
 
 ATTR_CONDITION = "condition"
 ATTR_ENTITY_ID = "entity_id"
@@ -18,7 +16,6 @@ _LOG = logging.getLogger(__name__)
 class RuleCondition(object):
 
     def __init__(self, condition):
-        # self.eval_function = None
         self._condition = condition
 
     def get_dict_config(self) -> dict:
@@ -55,7 +52,6 @@ class AndCondition(RuleCondition):
 
     def __init__(self):
         super().__init__("and")
-        # self._condition = "and"
         self._conditions = []     # list of RuleConditions
 
     def add_condition(self, condition):
@@ -89,7 +85,6 @@ class OrCondition(RuleCondition):
 
     def __init__(self):
         super().__init__("or")
-        # self._condition = "or"
         self._conditions = []     # list of RuleConditions
 
     def add_condition(self, condition):
@@ -121,7 +116,6 @@ class NumericStateCondition(RuleCondition):
 
     def __init__(self, entity_id, above_value=None, below_value=None):
         super().__init__("numeric_state")
-        # self._condition = "numeric_state"     # string
         self._entity_id = entity_id             # string
         self._above_value = None                # numeric
         self._below_value = None                # numeric
@@ -152,14 +146,6 @@ class NumericStateCondition(RuleCondition):
     @staticmethod
     def from_dict(json):
         j = json
-        # kwargs = {
-        #     ATTR_ENTITY_ID: j[ATTR_ENTITY_ID]
-        # }
-        # if "above_value" in j:
-        #     kwargs["above_value"] = j.get("above_value")
-        # if "below_value" in j:
-        #     kwargs["below_value"] = j.get("below_value")
-        # return NumericStateCondition(**kwargs)
         return NumericStateCondition(
             j.get(ATTR_ENTITY_ID),
             j.get("above_value"),
@@ -204,10 +190,8 @@ class StateCondition(RuleCondition):
 
     def __init__(self, entity_id, state, for_delta=None):
         super().__init__("state")
-        # self._condition = "state"
         self._entity_id = entity_id     # string
         self._state = state             # string
-        # self._for_delta = for_delta     # datetime.timedelta
 
     @staticmethod
     def from_dict(json):
@@ -216,8 +200,6 @@ class StateCondition(RuleCondition):
             ATTR_ENTITY_ID: j[ATTR_ENTITY_ID],
             "state": j["state"]
         }
-        # if "for" in j:
-        #     kwargs["for_delta"] = helpers.dict_to_timedelta(j["for"])
         return StateCondition(**kwargs)
 
     # Override
@@ -227,9 +209,6 @@ class StateCondition(RuleCondition):
             ATTR_ENTITY_ID: self._entity_id,
             "state": self._state
         }
-        # if self._for_delta:
-        #     d["for"] = self._for_delta
-        # return d
 
     # Override
     def evaluate(self, engine) -> bool:
@@ -251,7 +230,6 @@ class SunCondition(RuleCondition):
 
     def __init__(self, after=None, before=None, after_offset=None, before_offset=None):
         super().__init__("sun")
-        # self._condition = "sun"
         self._entity_id = "sun.sun"
         # Need one of these
         self._after = after         # string: sunrise or sunset
@@ -336,7 +314,6 @@ class TemplateCondition(RuleCondition):
 
     def __init__(self, value_template):
         super().__init__("template")
-        # self._condition = "template"
         self._value_template = value_template   # template string
 
     @staticmethod
@@ -362,58 +339,50 @@ class TimeCondition(RuleCondition):
     #   - wed
     #   - fri
 
-    def __init__(self, after=None, before=None, weekday=None, tz_name=None):
+    def __init__(self, after=None, before=None, weekday=None, tz_name='UTC'):
         super().__init__("time")
-        # self._condition = "time"
-        self._after = after         # datetime.time
-        self._before = before       # datetime.time
-        self._weekday = weekday     # list of strings: [mon, tue, wed, thu, fri, sat, sun]
-        self._tz_name = tz_name     # Default to config.TZ if not specified
+        self._after_time_naive = after    # datetime.time
+        self._before_time_naive = before  # datetime.time
+        self._weekday_list = weekday      # list of strings: [mon, tue, wed, thu, fri, sat, sun]
+        self._tz_name = tz_name           # Default to config.TZ if not specified
 
-        if self._tz_name is None:
-            self._tz_name = "UTC"
-
-        if not (self._after or self._before or self._weekday):
+        if not (self._after_time_naive or self._before_time_naive or self._weekday):
             raise helpers.ValidationError(
                 "TimeCondition: must specify one of: after, before, or weekday")
 
     @staticmethod
-    def from_dict(json, config_tz):
+    def from_dict(json):
         j = json
-        # kwargs = {}
-        # if "after" in j:
-        #     kwargs["after"] = helpers.dict_to_time(j.get("after"))
-        # if "before" in j:
-        #     kwargs["before"] = helpers.dict_to_time(j.get("before"))
-        # if "weekday" in j:
-        #     kwargs["weekday"] = j.get("weekday")
         tz_name = j.get("tz")
         if tz_name is None:
-            tz_name = config_tz
+            tz_name = 'UTC'
 
         return TimeCondition(
-            helpers.hms_string_to_time(j.get("after"), tz_name),
-            helpers.hms_string_to_time(j.get("before"), tz_name),
-            helpers.hms_string_to_time(j.get("weekday"), tz_name)
+            after=helpers.hms_string_to_time(j.get("after")),
+            before=helpers.hms_string_to_time(j.get("before")),
+            weekday=j.get("weekday"),
+            tz_name=tz_name
         )
 
     # Override
     def get_dict_config(self) -> dict:
         d = {
-            ATTR_CONDITION: self._condition
+            ATTR_CONDITION: self._condition,
+            "tz": self._tz_name
         }
-        if self._after:
-            # d["after"] = helpers.time_to_dict(self._after)
-            d["after"] = helpers.time_to_hms_string(self._after)
-        if self._before:
-            # d["before"] = helpers.time_to_dict(self._before)
-            d["before"] = helpers.time_to_hms_string(self._before)
-        if self._weekday:
-            d["weekday"] = self._weekday
+        if self._after_time_naive:
+            d["after"] = helpers.time_to_hms_string(self._after_time_naive)
+        if self._before_time_naive:
+            d["before"] = helpers.time_to_hms_string(self._before_time_naive)
+        if self._weekday_list:
+            d["weekday"] = self._weekday_list
         return d
 
     # Override
     def evaluate(self, engine) -> bool:
+        self.evaluate_at(datetime.datetime.now(pytz.utc))
+
+    def evaluate_at(self, eval_dt) -> bool:
         """Test if current time is within the period listed in the condition.
 
         This condition test essentially determines if the current time is within
@@ -441,27 +410,37 @@ class TimeCondition(RuleCondition):
             C is NOT between _before and _after = True (within the period)
 
         """
-        now = datetime.datetime.now(tz=pytz.timezone(engine.config.tz))
-        now_time = now.time()
-
         # Snap _after and _before to day's edges if not specified
-        if self._after is None:
-            self._after = datetime.time(0)
-        if self._before is None:
-            self._before = datetime.time(23, 59, 59, 999999)
+        if self._after_time_naive is None:
+            self._after_time_naive = datetime.time(0)
+        if self._before_time_naive is None:
+            self._before_time_naive = datetime.time(23, 59, 59, 999999)
 
-        if self._after < self._before:     # Test for a period within a day
-            if not self._after <= now_time < self._before:  # C is NOT in the mid-day period
+        # Convert eval_dt to condition tz, then get its date()
+        localtz = pytz.timezone(self._tz_name)       # datetime.tzinfo
+        eval_dt_local = eval_dt.astimezone(localtz)  # datetime.datetime
+        eval_date_local = eval_dt_local.date()       # datetime.date
+
+        # Create after/before datetimes using today's local date + after/before times
+        after_dt = localtz.localize(
+            datetime.datetime.combine(eval_date_local, self._after_time_naive))
+        before_dt = localtz.localize(
+            datetime.datetime.combine(eval_date_local, self._before_time_naive))
+
+        # Test for a period within a day
+        if after_dt < before_dt:
+            if not (after_dt <= eval_dt < before_dt):
+                # C is NOT in the mid-day period
                 return False
         else:
             # Period crosses midnight
-            if self._before <= now_time < self._after:
+            if before_dt <= eval_dt < after_dt:
                 # C is in the mid-day non-period (i.e. not in the period)
                 return False
 
-        if self._weekday is not None:
-            now_weekday = helpers.day_of_week_xxx(now)
-            if now_weekday not in self._weekday:
+        if self._weekday_list is not None:
+            now_weekday = helpers.day_of_week_xxx(eval_dt_local)
+            if now_weekday not in self._weekday_list:
                 return False
 
         return True
@@ -474,7 +453,6 @@ class ZoneCondition(RuleCondition):
 
     def __init__(self, entity_id, zone):
         super().__init__("zone")
-        # self._condition = "zone"
         self._entity_id = entity_id     # string
         self._zone = zone               # string
 
