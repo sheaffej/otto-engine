@@ -346,8 +346,8 @@ class TimeCondition(RuleCondition):
         self._weekday_list = weekday      # list of strings: [mon, tue, wed, thu, fri, sat, sun]
         self._tz_name = tz_name           # Default to config.TZ if not specified
 
-        if not (self._after_time_naive or self._before_time_naive or self._weekday):
-            raise helpers.ValidationError(
+        if not (self._after_time_naive or self._before_time_naive or self._weekday_list):
+            raise TypeError(
                 "TimeCondition: must specify one of: after, before, or weekday")
 
     @staticmethod

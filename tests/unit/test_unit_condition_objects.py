@@ -17,7 +17,7 @@ class TestConditionObjects(unittest.TestCase):
     def test_time_condition(self):
         # (
         #   condition_dict, condition_tz,
-        #   evaltime, expected True/False
+        #   evaltime, expected True/False/Exception
         # )
         tests = [
             (   # PT condition w/ PT evaltime: eval True
@@ -58,16 +58,41 @@ class TestConditionObjects(unittest.TestCase):
                 parse("2018-06-02 02:10:00-00:00"), False
             ),
 
+            (   # Test only if weekday is in condtion: eval True
+                {"condition": "time", "tz": PT_TZ,
+                    "weekday": ["sat"]},
+                parse("2018-06-30 02:10:00-07:00"), True
+            ),
+
+            # Test invalid conditions: eval False
+            (
+                {"condition": "time", "tz": PT_TZ},
+                parse("2018-06-30 02:10:00-07:00"), TypeError()
+            ),
+            (
+                {"condition": "time"},
+                parse("2018-06-30 02:10:00-07:00"), TypeError()
+            ),
         ]
 
         for cond_dict, evaltime, expected in tests:
             print()
-            cond_obj = condition_objects.TimeCondition.from_dict(cond_dict)
-            print("Cond: {}".format(cond_obj.serialize()))
-            print("Evaltime: {}, Expected: {}".format(evaltime, expected))
-            result = cond_obj.evaluate_at(evaltime)
-            print("Actual: ", result)
-            self.assertEqual(result, expected)
+            print("cond_dict: ", cond_dict)
+            try:
+                cond_obj = condition_objects.TimeCondition.from_dict(cond_dict)
+                print("cond_obj: {}".format(cond_obj.serialize()))
+                print("evaltime:", evaltime)
+                print("expected:", expected)
+                result = cond_obj.evaluate_at(evaltime)
+                print("Actual: ", result)
+                self.assertEqual(result, expected)
+            except Exception as e:
+                print("Exception raised:", type(e), e)
+                if isinstance(expected, Exception):
+                    self.assertIsInstance(e, type(expected))
+                else:
+                    self.fail(
+                        msg="Exception {} raised when expecting {}".format(type(e), type(expected)))
 
 
 if __name__ == "__main__":
