@@ -153,9 +153,15 @@ class AlarmTimeSpecAction(AlarmAction):
 
 class EngineClock (fibers.Fiber):
 
-    def __init__(self, tz_name: str, loop=None):
+    def __init__(self, tz_name: str, engine, loop=None):
+        """
+            We pass in both engine and loop even though we can get loop from engine,
+            because the clock may use a different loop than the engine,
+            such as when performing unit testing.
+        """
         super().__init__()
         self._tz_name = tz_name
+        self._engine = engine
         self._loop = loop
         self._timeline = []     # list of ClockAlarms; one for each time at which to do something
 

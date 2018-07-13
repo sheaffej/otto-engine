@@ -10,8 +10,7 @@ _LOG = logging.getLogger(__name__)
 
 class AutomationRule(object):
 
-    def __init__(self, engine, id, description='', enabled=True, group=None, notes=''):
-        self._engine = engine
+    def __init__(self, id, description='', enabled=True, group=None, notes=''):
         self.id = id
         self.description = description
         self.enabled = enabled
@@ -50,7 +49,7 @@ class AutomationRule(object):
                 # trigger_objects.EventTrigger
             )):
 
-                async def async_handle_trigger(event_obj, trigger=trigger):
+                async def async_handle_trigger(event_obj, engine, trigger=trigger):
                     # The trigger arg forces early binding of trigger
                     # http://stackoverflow.com/a/3431699/3784722
                     '''Called when an event occurs.  Is passed in the object representing the event
@@ -62,7 +61,7 @@ class AutomationRule(object):
                             _LOG.info(
                                 "Rule Trigger passed.  Scheduling rule condition evaluation "
                                 + "for rule {}".format(self.id))
-                            self._engine.schedule_task(self.async_eval_rule())
+                            engine.schedule_task(self.async_eval_rule(engine))
 
                 listeners.append(StateListener(self.id, trigger.entity_id, async_handle_trigger))
         return listeners
@@ -72,7 +71,7 @@ class AutomationRule(object):
         for trigger in self.triggers:
             if isinstance(trigger, trigger_objects.EventTrigger):
 
-                async def async_handle_trigger(event_obj, trigger=trigger):
+                async def async_handle_trigger(event_obj, engine, trigger=trigger):
                     # The trigger arg forces early binding of trigger
                     # http://stackoverflow.com/a/3431699/3784722
                     ''' Called when an event occurs.  Is passed in the object representing the event
@@ -84,7 +83,7 @@ class AutomationRule(object):
                             _LOG.info(
                                 "Rule Trigger passed.  Scheduling rule condition evaluation "
                                 + "for rule {}".format(self.id))
-                            self._engine.schedule_task(self.async_eval_rule())
+                            engine.schedule_task(self.async_eval_rule(engine))
 
                 listeners.append(EventListener(self.id, trigger.event_type, async_handle_trigger))
         return listeners
@@ -96,12 +95,12 @@ class AutomationRule(object):
             # Only if the trigger is a TimeTrigger
             if isinstance(trigger, trigger_objects.TimeTrigger):
 
-                async def async_handle_time_trigger():
+                async def async_handle_time_trigger(engine):
                     if self.enabled:
                         _LOG.info(
                             "Rule Time Trigger firing.  Scheduling rule condition evaluation "
                             + "for rule {}".format(self.id))
-                        self._engine.schedule_task(self.async_eval_rule())
+                        engine.schedule_task(self.async_eval_rule(engine))
 
                 time_triggers.append(
                     TimeListener(
@@ -111,23 +110,23 @@ class AutomationRule(object):
 
         return time_triggers
 
-    async def async_eval_rule(self):
+    async def async_eval_rule(self, engine):
         ''' Called after a triggered RuleTrigger evals to True.
         This function will evalutes the AutomationRule's rule_condition.
         If the rule should run, then this function will schedule the rule's
         actions to run.
         '''
         _LOG.info("Evaluating rule condition for rule: {}".format(self.id))
-        if self.rule_condition is None or self.rule_condition.evaluate(self._engine):
+        if self.rule_condition is None or self.rule_condition.evaluate(engine):
             _LOG.debug("Rule condition passed. Scheduling actions for rule: {}".format(self.id))
-            self._engine.schedule_task(self.async_run_actions())
+            engine.schedule_task(self.async_run_actions(engine))
 
-    async def async_run_actions(self):
+    async def async_run_actions(self, engine):
         '''Run the action sequences'''
         _LOG.info("AutomationRule {} is running".format(self.id))
 
         for seqId, action_seq in enumerate(self.actions):
-            await action_seq.async_run(self._engine, self.id, seqId)
+            await action_seq.async_run(engine, self.id, seqId)
 
 
 class RuleAction(object):
@@ -210,7 +209,6 @@ class EventListener(HassListener):
     def __init__(self, rule_id, event_type, trigger_function):
         super().__init__(rule_id, trigger_function)
         self._event_type = event_type
-        # self._event_data = event_data
 
     @property
     def event_type(self):
@@ -218,7 +216,7 @@ class EventListener(HassListener):
 
 
 class TimeListener(HassListener):
-    def __init__(self, rule_id, listener_id: str, timespec: clock.TimeSpec, trigger_function):
+    def __init__(self, rule_id: str, listener_id: str, timespec: clock.TimeSpec, trigger_function):
         """
             :param str rule_id:
             :param str listener_id:

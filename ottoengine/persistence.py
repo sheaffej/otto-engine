@@ -142,7 +142,6 @@ class PersistenceManager:
         # Create AutomationRule
         try:
             rule = rule_objects.AutomationRule(
-                engine=self._engine,
                 id=rule_dict.get("id"),
                 description=rule_dict.get("description", ''),
                 enabled=rule_dict.get("enabled", True),

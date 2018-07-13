@@ -26,7 +26,7 @@ class OttoEngine(object):
 
         self._websocket = None
         self._fiber_websocket_reader = None
-        self._clock = clock.EngineClock(self._config.tz, loop=self._loop)
+        self._clock = clock.EngineClock(self._config.tz, self, loop=self._loop)
 
         self._state_listeners = {}     # Provide a way to lookup listeners by entity_id
         self._event_listeners = {}     # Provide a way to lookup listeners by event_type
@@ -76,7 +76,7 @@ class OttoEngine(object):
                             listener.rule_id, event.entity_id))
                     # The trigger_function is a reference to an async_handle_trigger() function
                     # created from AutomationRule.get_event_listeners()
-                    self.schedule_task(listener.trigger_function(event))
+                    self.schedule_task(listener.trigger_function(event, self))
 
         elif type(event) is dataobjects.HassEvent:
 
@@ -91,7 +91,7 @@ class OttoEngine(object):
                             listener.rule_id, event.event_type))
                     # The trigger_function is a reference to an async_handle_trigger() function
                     # created from AutomationRule.get_event_listeners()
-                    self.schedule_task(listener.trigger_function(event))
+                    self.schedule_task(listener.trigger_function(event, self))
 
     def get_state_threadsafe(self, group, key):
         '''Get state from engine.  This is called by threads outside of the event loop'''

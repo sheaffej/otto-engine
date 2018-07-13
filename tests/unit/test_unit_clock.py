@@ -18,7 +18,8 @@ class TestClock(unittest.TestCase):
     def setUp(self):
         print()
         self.loop = asyncio.get_event_loop()
-        self.clock = clock.EngineClock(TZ, loop=self.loop)
+        self.engine = None
+        self.clock = clock.EngineClock(TZ, self.engine, loop=self.loop)
 
     def test_basic_tick(self):
         """Test the tick mechanism, to ensure it executes a TimeSpec at the right time.

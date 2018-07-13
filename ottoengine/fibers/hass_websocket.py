@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import traceback
 
 from ottoengine import const
 from ottoengine.model import dataobjects
@@ -32,6 +33,7 @@ class HassWebSocketReader(Fiber):
                 _LOG.warn("{}: {}".format(self.__class__, str(e)))
             else:
                 _LOG.error("Exception reading from websocket: {}".format(str(e)))
+                traceback.print_exc()
 
         await self._socket.async_close(force=True)
         self._engine.websocket_fiber_ending()
