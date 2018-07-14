@@ -4,10 +4,10 @@ import signal
 import sys
 import traceback
 
-from ottoengine import state, const, persistence, config
+from ottoengine.model import dataobjects, trigger_objects, rule_objects
+from ottoengine import state, const, persistence, config, helpers
 from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
-from ottoengine import helpers
-from ottoengine.model import dataobjects
+# from ottoengine.model.rule_objects import AutomationRule
 
 
 ASYNC_TIMEOUT_SECS = 5
@@ -18,19 +18,28 @@ _LOG = logging.getLogger(__name__)
 
 class OttoEngine(object):
 
-    def __init__(self, config: config.EngineConfig):
+    def __init__(self, config: config.EngineConfig,
+                 loop: asyncio.AbstractEventLoop,
+                 clock_obj: clock.EngineClock,
+                 persistence_mgr: persistence.PersistenceManager = None):
+
         self._config = config
-        self._loop = asyncio.get_event_loop()
-        self._states = state.OttoEngineState()
-        self._persistence_mgr = persistence.PersistenceManager(self, self._config.json_rules_dir)
+        self._loop = loop
+        self._persistence_mgr = persistence_mgr
+        self._clock = clock_obj
+
+        if not self._persistence_mgr:
+            self._persistence_mgr = persistence.PersistenceManager(
+                self, self._config.json_rules_dir)
 
         self._websocket = None
         self._fiber_websocket_reader = None
-        self._clock = clock.EngineClock(self._config.tz, self, loop=self._loop)
 
-        self._state_listeners = {}     # Provide a way to lookup listeners by entity_id
+        self._states = state.OttoEngineState()
+
+        # self._state_listeners = {}     # Provide a way to lookup listeners by entity_id
         self._event_listeners = {}     # Provide a way to lookup listeners by event_type
-        self._time_listeners = []      # Just keeps track of the IDs so we can remove during reload
+        self._time_listeners = []     # Just keeps track of the IDs so we can remove during reload
 
     # ~~~~~~~~~~~~~~~~~~~~~~~~
     #   Engine's Public API
@@ -52,7 +61,7 @@ class OttoEngine(object):
             _LOG.info("Starting event loop")
             self._loop.call_soon(
                 self._states.set_engine_state, "start_time", helpers.nowutc())
-            self.schedule_task(self._async_setup_engine())
+            self._loop.create_task(self._async_setup_engine())
             self._loop.run_forever()
         finally:
             _LOG.info("Shutting down OttoEngine")
@@ -60,38 +69,60 @@ class OttoEngine(object):
 
     def process_event(self, event):
         ''' Process an event received by the websocket fiber '''
-        if type(event) is dataobjects.StateChangedEvent:
+
+        listeners = []
+        if isinstance(event, dataobjects.StateChangedEvent):
             # Update the state
             self._states.set_entity_state(event.entity_id, event.new_state_obj)
 
             _LOG.debug("[Event] entity_id: {}, new_state: {}, attributes: {}".format(
                 event.entity_id, event.new_state_obj.state, event.new_state_obj.attributes))
 
-            # Trigger any listeners
-            listeners = self._state_listeners.get(event.entity_id)
-            if listeners is not None:
-                for listener in listeners:
-                    _LOG.info(
-                        "Invoking trigger - rule: {}, entity: {}".format(
-                            listener.rule_id, event.entity_id))
-                    # The trigger_function is a reference to an async_handle_trigger() function
-                    # created from AutomationRule.get_event_listeners()
-                    self.schedule_task(listener.trigger_function(event, self))
+            entity_listeners = self._event_listeners.get(event.entity_id)
+            if entity_listeners is not None:
+                for listener in entity_listeners:
+                    _LOG.info("Invoking trigger - rule: {}, entity: {}".format(
+                            listener.rule.id, event.entity_id))
+                    listeners.append(listener)
 
-        elif type(event) is dataobjects.HassEvent:
-
+        elif isinstance(event, dataobjects.HassEvent):
             _LOG.debug(
                 "[Event] event_type: {}, event_data: {}".format(event.event_type, event.data_obj))
 
-            listeners = self._event_listeners.get(event.event_type)
-            if listeners is not None:
-                for listener in listeners:
-                    _LOG.info(
-                        "Invoking trigger - rule: {}, event_type: {}".format(
-                            listener.rule_id, event.event_type))
-                    # The trigger_function is a reference to an async_handle_trigger() function
-                    # created from AutomationRule.get_event_listeners()
-                    self.schedule_task(listener.trigger_function(event, self))
+            event_listeners = self._event_listeners.get(event.event_type)
+            if event_listeners is not None:
+                for listener in event_listeners:
+                    _LOG.info("Invoking trigger - rule: {}, event_type: {}".format(
+                            listener.rule.id, event.event_type))
+                    listeners.append(listener)
+
+        # The trigger_function is a reference to an async_handle_trigger() function
+        # created from rule_objects.get_XXX_listeners()
+        for listener in listeners:
+            # self._loop.create_task(listener.trigger_function(event, self._loop))
+            self._loop.create_task(invoke_rule(self, listener.rule, listener.trigger, event=event))
+
+    # async def _invoke_rule(self, rule: rule_objects.AutomationRule,
+    #                        trigger, event: dataobjects.HassEvent = None):
+    #     # Evaluate Trigger
+    #     if isinstance(trigger, trigger_objects.ListenerTrigger) and (event is not None):
+    #         if trigger.eval_trigger(event):
+    #             _LOG.debug(
+    #                 "Rule trigger passed. Scheduling rule condition check: {}".format(rule.id))
+    #         else:
+    #             return
+
+    #     # Evaluate Rule Condition
+    #     if rule.rule_condition.evaluate(self):
+    #         _LOG.debug("Rule condition passed. Scheduling actions for rule: {}".format(rule.id))
+    #     else:
+    #         return
+
+    #     # Run Actions
+    #     for seqId, action_seq in enumerate(rule.actions):
+    #         if action_seq.action_condition is not None:
+    #             if action_seq.action_condition.evaluate(self):
+    #                 await rule_objects.async_run_action_seq(rule, seqId, self)
 
     def get_state_threadsafe(self, group, key):
         '''Get state from engine.  This is called by threads outside of the event loop'''
@@ -105,10 +136,7 @@ class OttoEngine(object):
 
     def call_service(self, service_call):
         # await self._websocket.async_call_service(service_call)
-        self.schedule_task(self._websocket.async_call_service(service_call))
-
-    def schedule_task(self, coro) -> asyncio.Task:
-        return self._loop.create_task(coro)
+        self._loop.create_task(self._websocket.async_call_service(service_call))
 
     def get_rules(self) -> list:
         async def _async_get_rules():
@@ -174,7 +202,7 @@ class OttoEngine(object):
 
     def websocket_fiber_ending(self):
         _LOG.warn("Websocket Fiber has ended...restarting Engine setup")
-        self.schedule_task(self._async_setup_engine())
+        self._loop.create_task(self._async_setup_engine())
 
     def check_timespec(self, spec_dict):
         try:
@@ -197,7 +225,7 @@ class OttoEngine(object):
         self._loop.stop()
 
     def _run_fiber(self, fiber) -> None:
-        task = self.schedule_task(fiber.async_run())
+        task = self._loop.create_task(fiber.async_run())
         fiber.asyncio_task = task
 
     async def _async_setup_engine(self):
@@ -239,39 +267,73 @@ class OttoEngine(object):
 
         rules = self._persistence_mgr.get_rules(self._config.json_rules_dir)
         for rule in rules:
-
-            # Add State Listeners
-            for listener in rule.get_state_listeners():
-                _LOG.info(
-                        "Adding state listener for entity: {} (rule: {})".format(
-                            listener.entity_id, listener.rule_id))
-                if listener.entity_id in self._state_listeners:
-                    self._state_listeners[listener.entity_id].append(listener)
-                else:
-                    self._state_listeners[listener.entity_id] = [listener]
-
-            # Add Event Listeners
-            for listener in rule.get_event_listeners():
-                _LOG.info(
-                    "Adding event listener for event_type: {} (rule: {})".format(
-                        listener.event_type, listener.rule_id))
-                if listener.event_type in self._event_listeners:
-                    self._event_listeners[listener.event_type].append(listener)
-                else:
-                    self._event_listeners[listener.event_type] = [listener]
-
-            # Add Time Listeners
-            for listener in rule.get_time_listeners():
-                _LOG.info(
-                    "Adding time listener: (rule: {}) {}".format(
-                        listener.rule_id, listener.timepsec.serialize()))
-                self._clock.add_timespec_action(
-                    listener.listener_id, listener.trigger_function,
-                    listener.timepsec, helpers.nowutc())
-                self._time_listeners.append(listener.listener_id)
+            # Register the rule's listeners
+            self._load_listeners(rule)
 
             # Add rule to State
             self.states.add_rule(rule)
+
+    def _load_listeners(self, rule: rule_objects.AutomationRule):
+            for listener in rule_objects.get_listeners(rule):
+
+                # State and Event triggers
+                if isinstance(listener.trigger, trigger_objects.ListenerTrigger):
+                    if isinstance(listener.trigger, trigger_objects.EventTrigger):
+                        listener_id = listener.trigger.event_type
+                    elif isinstance(listener.trigger,
+                                    (trigger_objects.StateTrigger,
+                                     trigger_objects.NumericStateTrigger)):
+                        listener_id = listener.trigger.entity_id
+                    _LOG.info("Adding listener for {} (rule: {})".format(listener_id, rule.id))
+                    if listener_id in self._event_listeners:
+                        self._event_listeners[listener_id].append(listener)
+                    else:
+                        self._event_listeners[listener_id] = [listener]
+
+                # Time triggers
+                if isinstance(listener.trigger, trigger_objects.TimeTrigger):
+                    _LOG.info("Adding time listener: (rule: {}) {}".format(
+                            listener.rule.id, listener.trigger.timespec.serialize()))
+
+                    self._clock.add_timespec_action(
+                        listener.trigger.id,
+                        # listener.trigger.action_function,
+                        invoke_rule(self, rule, listener.trigger, event=None),
+                        listener.trigger.timespec,
+                        helpers.nowutc()
+                    )
+                    # Add reference so we can find the listener id to remove it
+                    self._time_listeners.append(listener.trigger.id)
+
+            # # Add State Listeners
+            # for listener in rule_objects.get_state_listeners(rule, self._loop):
+            #     _LOG.info(
+            #             "Adding state listener for entity: {} (rule: {})".format(
+            #                 listener.entity_id, listener.rule_id))
+            #     if listener.entity_id in self._state_listeners:
+            #         self._state_listeners[listener.entity_id].append(listener)
+            #     else:
+            #         self._state_listeners[listener.entity_id] = [listener]
+
+            # # Add Event Listeners
+            # for listener in rule_objects.get_event_listeners(rule, self._loop):
+            #     _LOG.info(
+            #         "Adding event listener for event_type: {} (rule: {})".format(
+            #             listener.event_type, listener.rule_id))
+            #     if listener.event_type in self._event_listeners:
+            #         self._event_listeners[listener.event_type].append(listener)
+            #     else:
+            #         self._event_listeners[listener.event_type] = [listener]
+
+            # # Add Time Listeners
+            # for listener in rule_objects.get_time_listeners(rule, self._loop):
+            #     _LOG.info(
+            #         "Adding time listener: (rule: {}) {}".format(
+            #             listener.rule_id, listener.timepsec.serialize()))
+            #     self._clock.add_timespec_action(
+            #         listener.listener_id, listener.trigger_function,
+            #         listener.timepsec, helpers.nowutc())
+            #     self._time_listeners.append(listener.listener_id)
 
     async def _async_clear_rules(self):
         _LOG.info("Clearing all registered state listeners")
@@ -314,3 +376,34 @@ class OttoEngine(object):
             "_async_set_state() called with - group: {}, key: {}, value: {}".format(
                 group, key, value))
         self._states.get_state(group, key, value)
+
+
+async def invoke_rule(engine: OttoEngine, rule: rule_objects.AutomationRule,
+                      trigger, event: dataobjects.HassEvent = None):
+    # Evaluate Trigger
+    if trigger is not None:
+        if isinstance(trigger, trigger_objects.ListenerTrigger) and (event is not None):
+            if trigger.eval_trigger(event):
+                _LOG.debug("Rule trigger passed: {}".format(rule.id))
+            else:
+                return
+
+    # Evaluate Rule Condition
+    if rule.rule_condition is not None:
+        if rule.rule_condition.evaluate(engine):
+            _LOG.debug("Rule condition passed: {}".format(rule.id))
+        else:
+            return
+
+    # Run Actions
+    for seqId, action_seq in enumerate(rule.actions):
+        _LOG.debug("Running rule action seqence: {} #{}".format(rule.id, seqId))
+        if action_seq.action_condition is not None:
+            if action_seq.action_condition.evaluate(engine):
+                _LOG.debug("Rule action condition passed: {} #{}".format(rule.id, seqId))
+            else:
+                _LOG.debug("Rule action condition failed: {} #{}".format(rule.id, seqId))
+                return
+
+        await rule_objects.async_run_action_seq(rule, seqId, engine)
+        _LOG.debug("Rule action sequence complete: {} #{}".format(rule.id, seqId))

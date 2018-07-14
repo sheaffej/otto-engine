@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+import asyncio
 import threading
 import logging
 import urllib.request
 import sys
 
 from ottoengine import engine, restapi, config
+from ottoengine.fibers import clock
 
 # Load the config
 try:
@@ -51,7 +53,11 @@ if len(sys.argv) > 1:
         config.test_websocket_port = 8123
 
 # Initialize the engine
-engine = engine.OttoEngine(config)
+loop = asyncio.get_event_loop()
+# persistence_mgr = persistence.PersistenceManager(self, config.json_rules_dir)
+clock = clock.EngineClock(config.tz, loop=loop)
+
+engine = engine.OttoEngine(config, loop, clock)
 
 # Start the Flask web server
 _LOG.info("Starting web thread")

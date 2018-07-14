@@ -19,7 +19,7 @@ class TestClock(unittest.TestCase):
         print()
         self.loop = asyncio.get_event_loop()
         self.engine = None
-        self.clock = clock.EngineClock(TZ, self.engine, loop=self.loop)
+        self.clock = clock.EngineClock(TZ, loop=self.loop)
 
     def test_basic_tick(self):
         """Test the tick mechanism, to ensure it executes a TimeSpec at the right time.
@@ -43,7 +43,7 @@ class TestClock(unittest.TestCase):
             self.exec_time = nowtime
             print("Action executed at {}".format(self.exec_time))
 
-        self.clock.add_timespec_action(uuid.uuid4(), myfunc, spec, nowtime)
+        self.clock.add_timespec_action(uuid.uuid4(), myfunc(), spec, nowtime)
         print(self.clock._format_timeline())
 
         for i in range(65):

@@ -201,7 +201,7 @@ class PersistenceManager:
         else:
             return {"success": success, "message": message}
 
-    def _trigger_from_dict(self, trigger_json: dict) -> trigger_objects.RuleTrigger:
+    def _trigger_from_dict(self, trigger_json: dict) -> trigger_objects.ListenerTrigger:
         trigger = None
         j = trigger_json
 

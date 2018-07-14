@@ -14,7 +14,7 @@ ATTR_PLATFORM = "platform"
 ATTR_ENTITY_ID = "entity_id"
 
 
-class RuleTrigger(object):
+class ListenerTrigger(object):
 
     def __init__(self, platform):
         self._platform = platform   # string
@@ -31,8 +31,12 @@ class RuleTrigger(object):
         # This MAY be overridden by the subclass to accomodate special handling
         return self.get_dict_config()
 
+    # Override
+    def eval_trigger(self, event_obj):
+        raise NotImplementedError("eval_trigger was not properly overridden")
 
-class StateTrigger(RuleTrigger):
+
+class StateTrigger(ListenerTrigger):
     # platform: state
     # entity_id: device_tracker.paulus, device_tracker.anne_therese
 
@@ -102,7 +106,7 @@ class StateTrigger(RuleTrigger):
         return run
 
 
-class NumericStateTrigger(RuleTrigger):
+class NumericStateTrigger(ListenerTrigger):
     # Mandatory
     # platform: numeric_state
     # entity_id: sensor.temperature
@@ -173,7 +177,7 @@ class NumericStateTrigger(RuleTrigger):
         return run
 
 
-class EventTrigger(RuleTrigger):
+class EventTrigger(ListenerTrigger):
     # Mandatory
     # platform: event
     # event_type: MY_CUSTOM_EVENT
@@ -222,7 +226,7 @@ class EventTrigger(RuleTrigger):
         return True
 
 
-class TimeTrigger(RuleTrigger):
+class TimeTrigger():
     # platform: time
     # minute: '*'
     # hour: '*'
@@ -269,18 +273,21 @@ class TimeTrigger(RuleTrigger):
         o.update(self._timespec.serialize())
         return o
 
-
-class HomeAssistantTrigger(RuleTrigger):
-    pass
-
-
-class MqttTrigger(RuleTrigger):
-    pass
+    def serialize(self) -> dict:
+        return self.get_dict_config()
 
 
-class SunTrigger(RuleTrigger):
-    pass
+# class HomeAssistantTrigger(RuleTrigger):
+#     pass
 
 
-class ZoneTrigger(RuleTrigger):
-    pass
+# class MqttTrigger(RuleTrigger):
+#     pass
+
+
+# class SunTrigger(RuleTrigger):
+#     pass
+
+
+# class ZoneTrigger(RuleTrigger):
+#     pass
