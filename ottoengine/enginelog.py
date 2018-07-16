@@ -1,6 +1,8 @@
 from ottoengine import helpers
 
-SERVICE_CALL = "service_call"
+EVENT = "event"
+ERROR = "error"
+SERVICE_CALLED = "service_called"
 TRIGGER_FIRED = "trigger_fired"
 CONDITION_TESTED = "condition_tested"
 CONDITION_PASSED = "condition_passed"
@@ -21,6 +23,17 @@ class EngineLog:
                 "entry": logentry,
             })
             self._trim_log()
+
+    def add_event(self, event_name: str, event_data: dict=None):
+        self.add(EVENT, {
+            "event": event_name,
+            "event_data": event_data if event_data else {}
+        })
+
+    def add_error(self, error_msg: str):
+        self.add(ERROR, {
+            "message": error_msg
+        })
 
     def get_logs(self):
         return self._log.copy()

@@ -60,6 +60,33 @@ class TestEnginelog(unittest.TestCase):
         logs = enlog.get_logs()
         self.assertAlmostEqual(len(logs), max_logs_3)
 
+    def test_add_event(self):
+        event_name = "test event"
+        event_data = {"a": 1, "b": 2}
+        enlog = enginelog.EngineLog()
+        enlog.add_event(event_name, event_data=event_data)
+
+        log = enlog.get_logs()[0]
+        log_type = log.get("type")
+        log_entry = log.get("entry")
+        self.assertEqual(log_type, "event")
+        self.assertEqual(log_entry.get("event"), event_name)
+        self.assertEqual(log_entry.get("event_data").get("a"), event_data.get("a"))
+        self.assertEqual(log_entry.get("event_data").get("b"), event_data.get("b"))
+
+    def test_add_error(self):
+        error_message = "test error message"
+        enlog = enginelog.EngineLog()
+        enlog.add_error(error_message)
+
+        log = enlog.get_logs()[0]
+        log_type = log.get("type")
+        log_entry = log.get("entry")
+        self.assertEqual(log_type, "error")
+        self.assertEqual(log_entry.get("message"), error_message)
+
+    def test_add_error(self):
+        pass
 
 def _fill_logs(enlog: enginelog.EngineLog, num_add_logs: int) -> int:
     for i in range(num_add_logs):
