@@ -85,8 +85,6 @@ class TestEnginelog(unittest.TestCase):
         self.assertEqual(log_type, "error")
         self.assertEqual(log_entry.get("message"), error_message)
 
-    def test_add_error(self):
-        pass
 
 def _fill_logs(enlog: enginelog.EngineLog, num_add_logs: int) -> int:
     for i in range(num_add_logs):
