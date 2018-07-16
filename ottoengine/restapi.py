@@ -175,3 +175,11 @@ def clock_check():
             "data": {"spec": spec}
         })
     return resp
+
+
+@app.route('/rest/logs', methods=['GET'])
+def logs():
+    resp = json.dumps({
+        "data": [entry for entry in engine.get_logs()]
+    })
+    return resp

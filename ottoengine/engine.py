@@ -59,6 +59,7 @@ class OttoEngine(object):
         # Start the event loop
         try:
             _LOG.info("Starting event loop")
+            self.englog.add_event("Otto-Engine starting")
             self._loop.call_soon(
                 self._states.set_engine_state, "start_time", helpers.nowutc())
             self._loop.create_task(self._async_setup_engine())
@@ -111,7 +112,7 @@ class OttoEngine(object):
 
     async def call_service(self, service_call: dataobjects.ServiceCall):
         await self._websocket.async_call_service(service_call)
-        self.englog.add(enginelog.SERVICE_CALL, service_call.serialize())
+        self.englog.add(enginelog.SERVICE_CALLED, service_call.serialize())
 
     def get_rules(self) -> list:
         async def _async_get_rules():
@@ -173,6 +174,13 @@ class OttoEngine(object):
             return self.states.get_services()
 
         future = asyncio.run_coroutine_threadsafe(_async_get_services(), self._loop)
+        return future.result(ASYNC_TIMEOUT_SECS)
+
+    def get_logs(self) -> list:
+        async def _async_get_logs():
+            return self.englog.get_logs()
+
+        future = asyncio.run_coroutine_threadsafe(_async_get_logs(), self._loop)
         return future.result(ASYNC_TIMEOUT_SECS)
 
     def websocket_fiber_ending(self):
