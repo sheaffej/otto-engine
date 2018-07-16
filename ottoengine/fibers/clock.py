@@ -9,7 +9,6 @@ from ottoengine import fibers, helpers
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
 
-
 TICK_INTERVAL_SECONDS = 1  # Number of seconds between ticks
 
 # Number of seconds past a scheduled event that it can still be executed
@@ -31,8 +30,6 @@ class TimeSpec(object):
         self._month = month
         self._weekdays = weekdays      # 0-6 is Sun to Sat; or 1-7 is Mon to Sun
         self._tz_name = tz_name
-        # if tz_name is None:
-        #     self._tz_name = config.TZ
 
     def _create_cron_spec(self):
         minute = self._minute
@@ -59,15 +56,6 @@ class TimeSpec(object):
     # ~~~~~~~~~~~~~~~~~~~
 
     def next_time_from(self, dt) -> datetime.datetime:
-
-        # Convert dt so it's the same TZ as the TimeSpec
-        # if self._is_utc:
-        #     dt = dt.astimezone(pytz.utc)
-        #     # print("converting dt to UTC: {}".format(dt))
-        # else:
-        #     dt = dt.astimezone(pytz.timezone(config.TZ))
-        #     # print("convering dt to LOCALTZ: {}".format(dt))
-
         cron = croniter.croniter(
             self._create_cron_spec(),
             dt.astimezone(pytz.timezone(self._tz_name))
@@ -237,6 +225,7 @@ class EngineClock (fibers.Fiber):
 
             # Process its actions
             for action in alarm.actions:
+                _LOG.debug("Running alarm action")
                 self._loop.create_task(action.action_function)
 
                 # Schedule the action's next time

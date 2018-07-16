@@ -5,9 +5,8 @@ import sys
 import traceback
 
 from ottoengine.model import dataobjects, trigger_objects, rule_objects
-from ottoengine import state, const, persistence, config, helpers
+from ottoengine import state, const, persistence, config, helpers, enginelog
 from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
-# from ottoengine.model.rule_objects import AutomationRule
 
 
 ASYNC_TIMEOUT_SECS = 5
@@ -21,23 +20,20 @@ class OttoEngine(object):
     def __init__(self, config: config.EngineConfig,
                  loop: asyncio.AbstractEventLoop,
                  clock_obj: clock.EngineClock,
-                 persistence_mgr: persistence.PersistenceManager = None):
+                 persistence_mgr: persistence.PersistenceManager,
+                 enginelog: enginelog.EngineLog):
 
         self._config = config
         self._loop = loop
         self._persistence_mgr = persistence_mgr
         self._clock = clock_obj
-
-        if not self._persistence_mgr:
-            self._persistence_mgr = persistence.PersistenceManager(
-                self, self._config.json_rules_dir)
+        self._enginelog = enginelog
 
         self._websocket = None
         self._fiber_websocket_reader = None
 
         self._states = state.OttoEngineState()
 
-        # self._state_listeners = {}     # Provide a way to lookup listeners by entity_id
         self._event_listeners = {}     # Provide a way to lookup listeners by event_type
         self._time_listeners = []     # Just keeps track of the IDs so we can remove during reload
 
@@ -48,6 +44,10 @@ class OttoEngine(object):
     @property
     def states(self):
         return self._states
+
+    @property
+    def englog(self):
+        return self._enginelog
 
     def start_engine(self):
         '''Starts the Otto Engine until it is shutdown'''
@@ -99,30 +99,8 @@ class OttoEngine(object):
         # The trigger_function is a reference to an async_handle_trigger() function
         # created from rule_objects.get_XXX_listeners()
         for listener in listeners:
-            # self._loop.create_task(listener.trigger_function(event, self._loop))
-            self._loop.create_task(invoke_rule(self, listener.rule, listener.trigger, event=event))
-
-    # async def _invoke_rule(self, rule: rule_objects.AutomationRule,
-    #                        trigger, event: dataobjects.HassEvent = None):
-    #     # Evaluate Trigger
-    #     if isinstance(trigger, trigger_objects.ListenerTrigger) and (event is not None):
-    #         if trigger.eval_trigger(event):
-    #             _LOG.debug(
-    #                 "Rule trigger passed. Scheduling rule condition check: {}".format(rule.id))
-    #         else:
-    #             return
-
-    #     # Evaluate Rule Condition
-    #     if rule.rule_condition.evaluate(self):
-    #         _LOG.debug("Rule condition passed. Scheduling actions for rule: {}".format(rule.id))
-    #     else:
-    #         return
-
-    #     # Run Actions
-    #     for seqId, action_seq in enumerate(rule.actions):
-    #         if action_seq.action_condition is not None:
-    #             if action_seq.action_condition.evaluate(self):
-    #                 await rule_objects.async_run_action_seq(rule, seqId, self)
+            self._loop.create_task(
+                async_invoke_rule(self, listener.rule, trigger=listener.trigger, event=event))
 
     def get_state_threadsafe(self, group, key):
         '''Get state from engine.  This is called by threads outside of the event loop'''
@@ -131,12 +109,9 @@ class OttoEngine(object):
         result = future.result(ASYNC_TIMEOUT_SECS)  # Wait for the result with a timeout
         return result
 
-    def call_service_threadsafe(self, service_call):
-        asyncio.run_coroutine_threadsafe(self.async_call_service(service_call), self._loop)
-
-    def call_service(self, service_call):
-        # await self._websocket.async_call_service(service_call)
-        self._loop.create_task(self._websocket.async_call_service(service_call))
+    async def call_service(self, service_call: dataobjects.ServiceCall):
+        await self._websocket.async_call_service(service_call)
+        self.englog.add(enginelog.SERVICE_CALL, service_call.serialize())
 
     def get_rules(self) -> list:
         async def _async_get_rules():
@@ -267,6 +242,9 @@ class OttoEngine(object):
 
         rules = self._persistence_mgr.get_rules(self._config.json_rules_dir)
         for rule in rules:
+            await self._async_load_rule(rule)
+
+    async def _async_load_rule(self, rule):
             # Register the rule's listeners
             self._load_listeners(rule)
 
@@ -274,6 +252,7 @@ class OttoEngine(object):
             self.states.add_rule(rule)
 
     def _load_listeners(self, rule: rule_objects.AutomationRule):
+
             for listener in rule_objects.get_listeners(rule):
 
                 # State and Event triggers
@@ -295,45 +274,17 @@ class OttoEngine(object):
                     _LOG.info("Adding time listener: (rule: {}) {}".format(
                             listener.rule.id, listener.trigger.timespec.serialize()))
 
+                    async def async_time_triggered(engine_obj=self):
+                        await async_invoke_rule(engine_obj, rule, trigger=None, event=None),
+
                     self._clock.add_timespec_action(
                         listener.trigger.id,
-                        # listener.trigger.action_function,
-                        invoke_rule(self, rule, listener.trigger, event=None),
+                        async_time_triggered(),
                         listener.trigger.timespec,
                         helpers.nowutc()
                     )
                     # Add reference so we can find the listener id to remove it
                     self._time_listeners.append(listener.trigger.id)
-
-            # # Add State Listeners
-            # for listener in rule_objects.get_state_listeners(rule, self._loop):
-            #     _LOG.info(
-            #             "Adding state listener for entity: {} (rule: {})".format(
-            #                 listener.entity_id, listener.rule_id))
-            #     if listener.entity_id in self._state_listeners:
-            #         self._state_listeners[listener.entity_id].append(listener)
-            #     else:
-            #         self._state_listeners[listener.entity_id] = [listener]
-
-            # # Add Event Listeners
-            # for listener in rule_objects.get_event_listeners(rule, self._loop):
-            #     _LOG.info(
-            #         "Adding event listener for event_type: {} (rule: {})".format(
-            #             listener.event_type, listener.rule_id))
-            #     if listener.event_type in self._event_listeners:
-            #         self._event_listeners[listener.event_type].append(listener)
-            #     else:
-            #         self._event_listeners[listener.event_type] = [listener]
-
-            # # Add Time Listeners
-            # for listener in rule_objects.get_time_listeners(rule, self._loop):
-            #     _LOG.info(
-            #         "Adding time listener: (rule: {}) {}".format(
-            #             listener.rule_id, listener.timepsec.serialize()))
-            #     self._clock.add_timespec_action(
-            #         listener.listener_id, listener.trigger_function,
-            #         listener.timepsec, helpers.nowutc())
-            #     self._time_listeners.append(listener.listener_id)
 
     async def _async_clear_rules(self):
         _LOG.info("Clearing all registered state listeners")
@@ -378,32 +329,64 @@ class OttoEngine(object):
         self._states.get_state(group, key, value)
 
 
-async def invoke_rule(engine: OttoEngine, rule: rule_objects.AutomationRule,
-                      trigger, event: dataobjects.HassEvent = None):
+async def async_invoke_rule(engine_obj: OttoEngine, rule: rule_objects.AutomationRule,
+                            trigger=None, event: dataobjects.HassEvent = None):
+    _LOG.debug("invoke_rule called for rule {}".format(rule.id))
+    engine_obj.englog.add(enginelog.DEBUG, {"message": "engine.invoke_rule() called"})
+
     # Evaluate Trigger
     if trigger is not None:
         if isinstance(trigger, trigger_objects.ListenerTrigger) and (event is not None):
             if trigger.eval_trigger(event):
-                _LOG.debug("Rule trigger passed: {}".format(rule.id))
+                _LOG.debug("Rule {} trigger passed".format(rule.id))
+                engine_obj.englog.add(enginelog.TRIGGER_FIRED, {
+                    "trigger": trigger.serialize()
+                })
             else:
-                return
+                return  # This could happen a lot, so let's not log it
+        else:
+            _LOG.debug(
+                "Trigger is not a ListnerTrigger, or event is None on rule: ".format(rule.id))
 
     # Evaluate Rule Condition
+    _LOG.debug("Checking for rule {} condition".format(rule.id))
     if rule.rule_condition is not None:
-        if rule.rule_condition.evaluate(engine):
-            _LOG.debug("Rule condition passed: {}".format(rule.id))
+        if rule.rule_condition.evaluate(engine_obj):
+            _LOG.debug("Rule {} condition passed".format(rule.id))
+            engine_obj.englog.add(enginelog.CONDITION_PASSED, {
+                "rule": rule.id,
+                "condition_type": "rule condition",
+                "condition": rule.rule_condition.serialize()
+            })
         else:
+            _LOG.debug("Rule {} condition is false: {}".format(
+                rule.id, rule.rule_condition.serialize()))
             return
 
     # Run Actions
+    _LOG.debug("Runing action sequences on rule: {}".format(rule.id))
     for seqId, action_seq in enumerate(rule.actions):
-        _LOG.debug("Running rule action seqence: {} #{}".format(rule.id, seqId))
-        if action_seq.action_condition is not None:
-            if action_seq.action_condition.evaluate(engine):
-                _LOG.debug("Rule action condition passed: {} #{}".format(rule.id, seqId))
-            else:
-                _LOG.debug("Rule action condition failed: {} #{}".format(rule.id, seqId))
-                return
+        _LOG.debug("Running rule {} action seq# {}".format(rule.id, seqId))
 
-        await rule_objects.async_run_action_seq(rule, seqId, engine)
-        _LOG.debug("Rule action sequence complete: {} #{}".format(rule.id, seqId))
+        if action_seq.action_condition is not None:
+            if action_seq.action_condition.evaluate(engine_obj):
+                _LOG.debug("Rule {} action condition {} passed".format(rule.id, seqId))
+                engine_obj.englog.add(enginelog.CONDITION_PASSED, {
+                    "rule": rule.id,
+                    "condition_type": "action condition",
+                    "action_seq": seqId,
+                    "condition": rule.rule_condition.serialize()
+                })
+
+            else:
+                _LOG.debug(
+                    "Rule {} action condition {} is false (rule will not run): {}".format(
+                        rule.id, seqId, action_seq.action_condition.serialize()))
+                continue
+
+        # Run the action sequence
+        await rule_objects.async_run_action_seq(rule, seqId, engine_obj)
+        _LOG.debug("Rule {} action seq# {} complete".format(rule.id, seqId))
+
+    _LOG.debug("Rule {} processing completed".format(rule.id))
+    engine_obj.englog.add(enginelog.RULE_COMPLETED, {"rule": rule.id})

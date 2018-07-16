@@ -30,12 +30,11 @@ def _error_not_implemented(backend, operation):
 
 class PersistenceManager:
 
-    def __init__(self, engine_obj, json_rules_dir):
+    def __init__(self, json_rules_dir):
         """
             :param engine.OttoEngine engine_obj:
             :param str json_rules_dir:
         """
-        self._engine = engine_obj
         self._json_rules_dir = json_rules_dir
 
         if not os.path.exists(self._json_rules_dir):
@@ -57,7 +56,7 @@ class PersistenceManager:
                 if file.endswith(JSON_EXTENSION):
                     filename = os.path.join(json_rules_dir, file)
                     _LOG.info("Found rule file: {}".format(filename))
-                    rule = self._load_file_rule(filename)
+                    rule = self.load_rule_from_file(filename)
                     if rule is None:
                         _LOG.error("Rule did not load properly: {}".format(filename))
                         continue
@@ -74,7 +73,7 @@ class PersistenceManager:
 
     def load_rule(self, rule_id: str) -> rule_objects.AutomationRule:
         filename = self._build_filename(rule_id)
-        return self._load_file_rule(filename)
+        return self.load_rule_from_file(filename)
 
     def save_rule(self, rule: rule_objects.AutomationRule):
         self._save_file_rule(rule)
@@ -82,11 +81,7 @@ class PersistenceManager:
     def delete_rule(self, rule_id: str) -> bool:
         return self._delete_file_rule(rule_id)
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~
-    # Non-public helper methods
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    def _load_file_rule(self, filename: str) -> rule_objects.AutomationRule:
+    def load_rule_from_file(self, filename: str) -> rule_objects.AutomationRule:
         """ Loads JSON from a file, and returns the JSON structure"""
 
         if not os.path.exists(filename):
@@ -117,7 +112,6 @@ class PersistenceManager:
 
     def _delete_file_rule(self, rule_id: str) -> bool:
         '''Returns True if file existed, False if file did not exist'''
-        # filename = os.path.join(config.JSON_RULES_DIR, "{}.{}".format(rule_id, JSON_EXTENSION))
         filename = self._build_filename(rule_id)
         try:
             os.remove(filename)
@@ -149,8 +143,6 @@ class PersistenceManager:
                 notes=rule_dict.get("notes", '')
             )
         except Exception as e:
-            # return { "success": False, "message": ""}
-            # _log_exception(e, "persistenc.rule_from_dict(): Error instantiating AutomationRule")
             success = False
             message = "Error instantiating AutomationRule: {}".format(sys.exc_info()[1])
             traceback.print_exc()
@@ -161,18 +153,15 @@ class PersistenceManager:
             for j in rule_dict["triggers"]:
                 rule.triggers.append(self._trigger_from_dict(j))
         except Exception as e:
-            # _log_exception(e, "persistenc.rule_from_dict(): Error creating triggers")
             success = False
             message = "Error creating triggers: {}".format(sys.exc_info()[1])
             traceback.print_exc()
             _LOG.error(message)
-            # raise e
 
         # Create Rule Condition
         try:
             rule.rule_condition = self._condition_from_dict(rule_dict.get("rule_condition"))
         except Exception as e:
-            # _log_exception(e, "persistenc.rule_from_dict(): Error creating rule condition")
             success = False
             message = "Error creating rule condition: {}".format(sys.exc_info()[1])
             traceback.print_exc()
@@ -190,7 +179,6 @@ class PersistenceManager:
                     raction.action_sequence.append(self._action_from_dict(j2))
                 rule.actions.append(raction)
         except Exception as e:
-            # _log_exception(e, "persistenc.rule_from_dict(): Error creating actions")
             success = False
             message = "Error creating actions: {}".format(sys.exc_info()[1])
             traceback.print_exc()
@@ -220,12 +208,6 @@ class PersistenceManager:
             trigger = trigger_objects.EventTrigger.from_dict(j)
         if "time" in j[ATTR_PLATFORM]:
             trigger = trigger_objects.TimeTrigger.from_dict(j)
-        # if "mqtt" in j[ATTR_PLATFORM]:
-        #     trigger = trigger_objects.MqttTrigger()
-        # if "sun" in j[ATTR_PLATFORM]:
-        #     trigger = trigger_objects.SunTrigger()
-        # if "zone" in j[ATTR_PLATFORM]:
-        #     trigger = trigger_objects.ZoneTrigger()
         return trigger
 
     def _condition_from_dict(self, condition_json: dict) -> condition_objects.RuleCondition:
@@ -233,13 +215,10 @@ class PersistenceManager:
         cond = None
 
         if j is None:
-            # raise Exception("Condition definition is null (None)")
             return None
         elif j.get(ATTR_CONDITION) is None:
             raise Exception("Condition does not contain condition: attribute")
 
-        # if "always" in j[ATTR_CONDITION]:
-        #     cond = condition_objects.AlwaysCondition()
         if "and" in j[ATTR_CONDITION]:
             cond = condition_objects.AndCondition()
             for c in j["conditions"]:

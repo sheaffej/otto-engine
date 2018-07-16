@@ -31,19 +31,6 @@ class RuleCondition(object):
         raise NotImplementedError("evaluate() was not properly overridden")
 
 
-# class AlwaysCondition(RuleCondition):
-#     # condition: always
-
-#     def __init__(self):
-#         super().__init__("always")
-
-#     def get_dict_config(self) -> dict:
-#         return { "condition": "always" }
-
-#     def evaluate(self, engine) -> bool:
-#         return True;
-
-
 class AndCondition(RuleCondition):
     # condition: and
     # conditions:
@@ -171,14 +158,15 @@ class NumericStateCondition(RuleCondition):
             + "{}, below_value: {}".format(self._above_value, self._below_value)
         )
         current_state = float(engine.states.get_entity_state(self._entity_id).state)
-        _LOG.debug("Current state: {}".format(current_state))
-        if isinstance(current_state, numbers.Number):
-            _LOG.debug("Current state is a Number")
-            if (self._above_value is None) or (current_state > self._above_value):
-                _LOG.debug("above_value passed")
-                if (self._below_value is None) or (current_state < self._below_value):
-                    _LOG.debug("below_value passed")
-                    return True
+        if current_state is not None:
+            _LOG.debug("Current state: {}".format(current_state))
+            if isinstance(current_state, numbers.Number):
+                _LOG.debug("Current state is a Number")
+                if (self._above_value is None) or (current_state > self._above_value):
+                    _LOG.debug("above_value passed")
+                    if (self._below_value is None) or (current_state < self._below_value):
+                        _LOG.debug("below_value passed")
+                        return True
         _LOG.debug("evaluate is false")
         return False
 
@@ -212,11 +200,12 @@ class StateCondition(RuleCondition):
 
     # Override
     def evaluate(self, engine) -> bool:
-        _LOG.debug(
-            "Condition state: {}, current state: {}".format(
-                self._state, engine.states.get_entity_state(self._entity_id).state))
-        if self._state == engine.states.get_entity_state(self._entity_id).state:
-            return True
+        current_state = engine.states.get_entity_state(self._entity_id)
+        if current_state is not None:
+            _LOG.debug("Condition state: {}, current state: {}".format(
+                self._state, current_state.state))
+            if self._state == current_state.state:
+                return True
         return False
 
 
@@ -380,7 +369,7 @@ class TimeCondition(RuleCondition):
 
     # Override
     def evaluate(self, engine) -> bool:
-        self.evaluate_at(datetime.datetime.now(pytz.utc))
+        return self.evaluate_at(helpers.nowutc())
 
     def evaluate_at(self, eval_dt) -> bool:
         """Test if current time is within the period listed in the condition.
@@ -427,23 +416,31 @@ class TimeCondition(RuleCondition):
         before_dt = localtz.localize(
             datetime.datetime.combine(eval_date_local, self._before_time_naive))
 
+        passed = True
+
         # Test for a period within a day
         if after_dt < before_dt:
             if not (after_dt <= eval_dt < before_dt):
                 # C is NOT in the mid-day period
-                return False
+                passed = False
         else:
             # Period crosses midnight
             if before_dt <= eval_dt < after_dt:
                 # C is in the mid-day non-period (i.e. not in the period)
-                return False
+                passed = False
 
         if self._weekday_list is not None:
             now_weekday = helpers.day_of_week_xxx(eval_dt_local)
             if now_weekday not in self._weekday_list:
-                return False
+                passed = False
 
-        return True
+        if not passed:
+            _LOG.debug(
+                "TimeCondition failed: after_dt=({}), before_dt=({}), eval_dt=({})".format(
+                    str(after_dt), str(before_dt), str(eval_dt)))
+        else:
+            _LOG.debug("TimeCondition passed")
+        return passed
 
 
 class ZoneCondition(RuleCondition):

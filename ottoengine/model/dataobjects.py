@@ -112,20 +112,14 @@ class EntityState(object):
             self.hidden = hidden
 
     def is_equal(self, state):
-        # print("comparing: {}".format(self.entity_id))
         if type(self) != type(state):
-            # print("types are not equal")
             return False
         if self.entity_id != state.entity_id:
-            # print("entity_id are not equal")
             return False
         if self.state != state.state:
-            # print("states are not equal")
             return False
         if self.last_changed != state.last_changed:
-            # print("last_changed are not equal")
             return False
-        # print("they are the same")
         return True
 
 
@@ -175,7 +169,6 @@ class ServiceRegistration(object):
             service_name = key
             service_info = services_dict.get(key)
 
-            # service_name = next (iter (command.keys()))
             _LOG.info("Found service: {}.{}".format(domain.name, service_name))
 
             service_description = service_info.get("description")
@@ -292,3 +285,10 @@ class ServiceCall(object):
 
         if self.service_data is None:
             self.service_data = {}
+
+    def serialize(self):
+        return {
+            "domain": self.domain,
+            "service": self.service,
+            "service_data": self.service_data
+        }

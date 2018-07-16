@@ -150,8 +150,10 @@ class TestTriggers(unittest.TestCase):
             websocket = await asyncws.connect(WSURL)
             event = websocket_helpers.event_hass_event(rule_id, trig_event_type, trig_event_data)
             await websocket.send(json.dumps(event))
+            print("event sent")
 
             response = await websocket.recv()
+            print("websocket response received")
             self._check_action_helper(response)
 
             # Clean up

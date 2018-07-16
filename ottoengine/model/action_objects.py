@@ -48,7 +48,7 @@ class ServiceAction(RuleActionItem):
         _LOG.info("Service called - domain: {}, service: {}, data: {}".format(
             self._domain, self._service, self._data_dict)
         )
-        engine.call_service(
+        await engine.call_service(
             dataobjects.ServiceCall(self._domain, self._service, self._data_dict)
         )
         return True
@@ -119,14 +119,12 @@ class DelayAction(RuleActionItem):
 
     @staticmethod
     def from_dict(json):
-        # return DelayAction(helpers.dict_to_timedelta(json["delay"]))
         return DelayAction(helpers.hms_string_to_timedelta(json["delay"]))
 
     # Override
     def get_dict_config(self) -> dict:
         # To re-create: timedelta(days, seconds, microseconds)
         return {
-            # "delay": helpers.timedelta_to_dict(self._delay_delta)
             "delay": helpers.timedelta_to_hms_string(self._delay_delta)
         }
 
@@ -148,67 +146,3 @@ class LogAction(RuleActionItem):
 
     def get_dict_config(self) -> dict:
         return {"log_message": self._message}
-
-
-# class WaitAction(RuleActionItem):
-#     # wait_template: "{{ states.climate.kitchen.attributes.valve < 10 }}"
-#     # timeout: 00:01:00
-
-#     def __init__(self, wait_template, timeout_delta=None):
-#         self._wait_template = wait_template     # string
-#         # Optional
-#         self._timeout_delta = timeout_delta     # datetime.timedelta
-
-#     @staticmethod
-#     def from_dict(json):
-#         kwargs = {
-#             "wait_template": json["wait_template"],
-#         }
-#         if "timeout" in json:
-#             kwargs["timeout"] = helpers.dict_to_timedelta(json["timeout"])
-#         return WaitAction(**kwargs)
-
-#     # Override
-#     def get_dict_config(self) -> dict:
-#         # To re-create: timedelta(days, seconds, microseconds)
-#         return {
-#             "wait_template": self._wait_template,
-#             "timeoout": helpers.timedelta_to_dict(self._timeout_delta)
-#         }
-
-#     # def serialize(self) -> dict:
-#     #     # To re-create: timedelta(days, seconds, microseconds)
-#     #     return {
-#     #         "wait_template": self._wait_template,
-#     #         "timeoout": helpers.timedelta_to_dict(self._timeout_delta)
-#     #     }
-
-
-# class EventAction(RuleActionItem):
-#     # event: LOGBOOK_ENTRY
-#     # event_data:
-#     #   name: Paulus
-#     #   message: is waking up
-#     #   entity_id: device_tracker.paulus
-#     #   domain: light
-
-#     def __init__(self, event, event_data):
-#         self._event = event             # string
-#         self._event_data = event_data   # {} dictionary
-
-#     @staticmethod
-#     def from_dict(json):
-#         kwargs = {
-#             "event": json["event"],
-#             "event_data": json["event_data"]
-#         }
-#         return EventAction(**kwargs)
-
-
-#     # Override
-#     def get_dict_config(self) -> dict:
-#         d = {
-#             "event": self._event,
-#             "event_data": self._event_data
-#         }
-#         return d
