@@ -23,7 +23,7 @@ class TestEngine(unittest.TestCase):
             {'platform': 'time', 'tz': 'America/Los_Angeles'}
         ]
         for test in tests:
-            result = self.engine.check_timespec(test)
+            result = self.engine.check_timespec_threadsafe(test)
             self.assertTrue("success" in result)
             self.assertEquals(result.get("success"), True)
 

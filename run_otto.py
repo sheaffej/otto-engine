@@ -32,16 +32,16 @@ clock = clock.EngineClock(config.tz, loop=loop)
 persistence_mgr = persistence.PersistenceManager(config.json_rules_dir)
 engine_log = enginelog.EngineLog()
 
-engine = engine.OttoEngine(config, loop, clock, persistence_mgr, engine_log)
+engine_obj = engine.OttoEngine(config, loop, clock, persistence_mgr, engine_log)
 
 # Start the Flask web server
 _LOG.info("Starting web thread")
-restapi.engine = engine
+restapi.engine_obj = engine_obj
 web_thread = threading.Thread(target=restapi.run_server)
 web_thread.start()
 
 # Start the engine's BaseLoop
-engine.start_engine()
+engine_obj.start_engine()
 
 # Shutdown the webui
 urllib.request.urlopen("http://localhost:{}/shutdown".format(config.rest_port))

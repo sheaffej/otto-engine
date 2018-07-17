@@ -103,30 +103,76 @@ class OttoEngine(object):
             self._loop.create_task(
                 async_invoke_rule(self, listener.rule, trigger=listener.trigger, event=event))
 
-    def get_state_threadsafe(self, group, key):
-        '''Get state from engine.  This is called by threads outside of the event loop'''
-        _LOG.debug("get_state() called with - group: {}, key: {}".format(group, key))
-        future = asyncio.run_coroutine_threadsafe(self._async_get_state(group, key), self._loop)
-        result = future.result(ASYNC_TIMEOUT_SECS)  # Wait for the result with a timeout
-        return result
-
     async def call_service(self, service_call: dataobjects.ServiceCall):
         await self._websocket.async_call_service(service_call)
         self.englog.add(enginelog.SERVICE_CALLED, service_call.serialize())
 
-    def get_rules(self) -> list:
+    def websocket_fiber_ending(self):
+        _LOG.warn("Websocket Fiber has ended...restarting Engine setup")
+        self._loop.create_task(self._async_setup_engine())
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #                       Threadsafe methods
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # These are to be called by threads outside of the engine's event loop
+
+    def get_state_threadsafe(self, group, key):
+        return asyncio.run_coroutine_threadsafe(
+            self._async_get_state(group, key), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_entity_state_threadsafe(self, entity_id):
+        async def _async_get_entity_state():
+            return self.states.get_entity_state(entity_id)
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_entity_state(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_all_entity_state_threadsafe(self):
+        async def _async_get_all_entity_state():
+            return self.states.get_all_entity_state_copy()
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_all_entity_state(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_rules_threadsafe(self) -> list:
         async def _async_get_rules():
             return self.states.get_rules()
         return asyncio.run_coroutine_threadsafe(
             _async_get_rules(), self._loop).result(ASYNC_TIMEOUT_SECS)
 
-    def get_rule(self, rule_id) -> dict:
+    def get_rule_threadsafe(self, rule_id) -> dict:
         async def _async_get_rule(rule_id):
             return self.states.get_rule(rule_id)
         return asyncio.run_coroutine_threadsafe(
             _async_get_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
 
-    def save_rule(self, rule_dict):
+    def delete_rule_threadsafe(self, rule_id) -> bool:
+        async def _async_delete_rule(rule_id):
+            return self._persistence_mgr.delete_rule(rule_id)
+        return asyncio.run_coroutine_threadsafe(
+            _async_delete_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def reload_rules_threadsafe(self) -> bool:
+        return asyncio.run_coroutine_threadsafe(
+            self._async_reload_rules(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_entities_threadsafe(self) -> list:
+        async def _async_get_entites():
+            return self.states.get_entities()
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_entites(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_services_threadsafe(self) -> list:
+        async def _async_get_services():
+            return self.states.get_services()
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_services(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def get_logs_threadsafe(self) -> list:
+        async def _async_get_logs():
+            return self.englog.get_logs()
+        return asyncio.run_coroutine_threadsafe(
+            _async_get_logs(), self._loop).result(ASYNC_TIMEOUT_SECS)
+
+    def save_rule_threadsafe(self, rule_dict):
         async def _async_save_rule(rule_dict):
             '''
             Returns { success: True } if successful,
@@ -152,42 +198,7 @@ class OttoEngine(object):
         return asyncio.run_coroutine_threadsafe(
             _async_save_rule(rule_dict), self._loop).result(ASYNC_TIMEOUT_SECS)
 
-    def delete_rule(self, rule_id) -> bool:
-        async def _async_delete_rule(rule_id):
-            return self._persistence_mgr.delete_rule(rule_id)
-        return asyncio.run_coroutine_threadsafe(
-            _async_delete_rule(rule_id), self._loop).result(ASYNC_TIMEOUT_SECS)
-
-    def reload_rules(self) -> bool:
-        future = asyncio.run_coroutine_threadsafe(self._async_reload_rules(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def get_entities(self) -> list:
-        async def _async_get_entites():
-            return self.states.get_entities()
-
-        future = asyncio.run_coroutine_threadsafe(_async_get_entites(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def get_services(self) -> list:
-        async def _async_get_services():
-            return self.states.get_services()
-
-        future = asyncio.run_coroutine_threadsafe(_async_get_services(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def get_logs(self) -> list:
-        async def _async_get_logs():
-            return self.englog.get_logs()
-
-        future = asyncio.run_coroutine_threadsafe(_async_get_logs(), self._loop)
-        return future.result(ASYNC_TIMEOUT_SECS)
-
-    def websocket_fiber_ending(self):
-        _LOG.warn("Websocket Fiber has ended...restarting Engine setup")
-        self._loop.create_task(self._async_setup_engine())
-
-    def check_timespec(self, spec_dict):
+    def check_timespec_threadsafe(self, spec_dict):
         try:
             spec = clock.TimeSpec.from_dict(spec_dict)
             next_time = spec.next_time_from(helpers.nowutc()).isoformat()

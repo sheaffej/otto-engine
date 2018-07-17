@@ -40,8 +40,8 @@ class TestRuleProcessing(unittest.TestCase):
         self.realworld_rules_dir = os.path.join(mydir, "../json_realworld_rules")
         self.loop = get_event_loop()
 
-        # Override nowutc() time source
-        self.sim_time = dt.datetime.now(pytz.utc)
+        # Monkey patch nowutc() so we can control the exact time
+        self.sim_time = dt.datetime.now(pytz.utc)  # Set a type for linting/ac
         helpers.nowutc = lambda: self.sim_time
 
     def test_2764351_away_lights(self):

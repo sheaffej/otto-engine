@@ -3,24 +3,22 @@ import flask_cors
 import json
 import logging
 
+MIMETYPE = "application/json"
 
 app = flask.Flask(__name__)
 flask_cors.CORS(app)    # Allow all cross-origin requests
-engine = None
-
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
+
+engine_obj = None  # global reference to the OttoEngine object
 
 
 def run_server():
     app.run(host='0.0.0.0')
 
 
-@app.route('/test')
-def test():
-    result = "I was started at: {}".format(
-        engine.get_state_threadsafe("engine", "start_time").strftime("%c"))
-    return result
+def dict_to_json_response(data_dict: dict) -> flask.Response:
+    return flask.Response(json.dumps(data_dict), mimetype=MIMETYPE)
 
 
 @app.route('/shutdown', methods=['GET'])
@@ -33,44 +31,32 @@ def shutdown():
     return ""
 
 
-@app.route('/states', methods=['GET'])
-def states():
-    '''Display the engine states'''
-
-    # Get the states
-    entity_states = engine.states.get_all_entity_state_copy()
-
-    # Display the states
-    return flask.render_template('states.html.j2', entity_states=entity_states)
-
-
 @app.route('/rest/ping')
 def ping():
-    return json.dumps({"success": True})
+    return dict_to_json_response({"success": True})
 
 
 @app.route('/rest/reload', methods=['GET'])
 def reload():
-    result = engine.reload_rules()
+    result = engine_obj.reload_rules_threadsafe()
     success = result.get("success")
     if success:
-        return json.dumps({"success": success, "message": "Rules reloaded successfully"})
+        resp = {"success": success, "message": "Rules reloaded successfully"}
     else:
-        return json.dumps({"success": success, "message": result.get("message")})
+        resp = {"success": success, "message": result.get("message")}
+    return dict_to_json_response(resp)
 
 
 @app.route('/rest/rules', methods=['GET'])
 def rules():
-    rules = engine.get_rules()
-    resp = json.dumps({
-        "data": [rule.serialize() for rule in rules]
-    })
-    return resp
+    rules = engine_obj.get_rules_threadsafe()
+    resp = {"data": [rule.serialize() for rule in rules]}
+    return dict_to_json_response(resp)
 
 
 @app.route('/rest/entities', methods=['GET'])
 def entities():
-    entities = engine.get_entities()
+    entities = engine_obj.get_entities_threadsafe()
     resp = json.dumps({
         "data": [
             {
@@ -86,7 +72,7 @@ def entities():
 
 @app.route('/rest/services', methods=['GET'])
 def services():
-    services = engine.get_services()
+    services = engine_obj.get_services_threadsafe()
     resp = json.dumps({
         "data": [service.serialize() for service in services]
     })
@@ -100,7 +86,7 @@ def rule(rule_id=None):
     if flask.request.method == 'GET':
         """Return the rule with ID <rule_id>"""
         _LOG.info("GET for rule {}".format(rule_id))
-        rule = engine.get_rule(rule_id)
+        rule = engine_obj.get_rule_threadsafe(rule_id)
         if rule is None:
             resp = json.dumps({
                 "success": False,
@@ -122,7 +108,7 @@ def rule(rule_id=None):
 
         data = flask.request.get_json().get("data")
 
-        result = engine.save_rule(data)
+        result = engine_obj.save_rule_threadsafe(data)
 
         success = result.get("success")
         if success:
@@ -143,7 +129,7 @@ def rule(rule_id=None):
     if flask.request.method == 'DELETE':
         """Delete rule with ID <rule_id>"""
         _LOG.info("DELETE for rule {}".format(rule_id))
-        success = engine.delete_rule(rule_id)
+        success = engine_obj.delete_rule_threadsafe(rule_id)
         return json.dumps({
             "success": success,
             "id": rule_id
@@ -160,7 +146,7 @@ def rule(rule_id=None):
 def clock_check():
     spec = flask.request.get_json().get('data')
     _LOG.info(spec)
-    result = engine.check_timespec(spec)
+    result = engine_obj.check_timespec_threadsafe(spec)
 
     success = result.get("success")
     if success:
@@ -180,6 +166,6 @@ def clock_check():
 @app.route('/rest/logs', methods=['GET'])
 def logs():
     resp = json.dumps({
-        "data": [entry for entry in engine.get_logs()]
+        "data": [entry for entry in engine_obj.get_logs_threadsafe()]
     })
     return resp
