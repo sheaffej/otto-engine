@@ -81,7 +81,16 @@ class TestEngine(unittest.TestCase):
         cfg.json_rules_dir = self.test_rules_dir
         self._setup_engine(config_obj=cfg)
 
-        self.loop.run_until_complete(self.engine_obj._async_load_rules())
+        self.loop.run_until_complete(self.engine_obj._async_reload_rules())
+
+        print("Rules loaded should match number of JSON rules in directory")
+        num_rule_files = len(
+            [file for file in os.listdir(cfg.json_rules_dir) if file.endswith(".json")]
+        )
+        num_rules_loaded = len(self.engine_obj.states.get_rules())
+        print(num_rule_files, "JSON rules found")
+        print(num_rules_loaded, "rules loaded into engine state")
+        self.assertEqual(num_rules_loaded, num_rule_files)
 
 
 def _get_event_loop() -> asyncio.AbstractEventLoop:

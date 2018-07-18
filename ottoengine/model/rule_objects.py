@@ -1,7 +1,7 @@
 # import asyncio
 import logging
 
-from ottoengine.model import action_objects, trigger_objects
+from ottoengine.model import trigger_objects
 
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
