@@ -87,8 +87,7 @@ class StateTrigger(ListenerTrigger):
 
     def eval_trigger(self, event_obj) -> bool:
         run = False
-        _LOG.debug("got event: {}".format(event_obj.raw_msg))
-        _LOG.debug("trigger defined is: {} {}".format(self, self.get_dict_config()))
+        _LOG.debug("trigger defined is: {}".format(self.get_dict_config()))
 
         if isinstance(event_obj, dataobjects.StateChangedEvent):
             if self._entity_id in event_obj.entity_id:

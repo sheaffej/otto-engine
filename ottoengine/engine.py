@@ -4,7 +4,7 @@ import signal
 import sys
 import traceback
 
-from ottoengine.model import dataobjects, trigger_objects, rule_objects
+from ottoengine.model import dataobjects, trigger_objects, rule_objects, action_objects
 from ottoengine import state, const, persistence, config, helpers, enginelog
 from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
 
@@ -82,7 +82,7 @@ class OttoEngine(object):
             entity_listeners = self._event_listeners.get(event.entity_id)
             if entity_listeners is not None:
                 for listener in entity_listeners:
-                    _LOG.info("Invoking trigger - rule: {}, entity: {}".format(
+                    _LOG.info("Invoking trigger: rule {}, entity: {}".format(
                             listener.rule.id, event.entity_id))
                     listeners.append(listener)
 
@@ -93,7 +93,7 @@ class OttoEngine(object):
             event_listeners = self._event_listeners.get(event.event_type)
             if event_listeners is not None:
                 for listener in event_listeners:
-                    _LOG.info("Invoking trigger - rule: {}, event_type: {}".format(
+                    _LOG.info("Invoking trigger: rule {}, event_type: {}".format(
                             listener.rule.id, event.event_type))
                     listeners.append(listener)
 
@@ -357,7 +357,7 @@ async def async_invoke_rule(engine_obj: OttoEngine, rule: rule_objects.Automatio
     if trigger is not None:
         if isinstance(trigger, trigger_objects.ListenerTrigger) and (event is not None):
             if trigger.eval_trigger(event):
-                _LOG.debug("Rule {} trigger passed".format(rule.id))
+                _LOG.debug("Rule {}'s trigger passed".format(rule.id))
                 engine_obj.englog.add(enginelog.TRIGGER_FIRED, {
                     "trigger": trigger.serialize()
                 })
@@ -365,47 +365,66 @@ async def async_invoke_rule(engine_obj: OttoEngine, rule: rule_objects.Automatio
                 return  # This could happen a lot, so let's not log it
         else:
             _LOG.debug(
-                "Trigger is not a ListnerTrigger, or event is None on rule: ".format(rule.id))
+                "Trigger is not a ListenerTrigger, or event is None on rule: ".format(rule.id))
 
     # Evaluate Rule Condition
-    _LOG.debug("Checking for rule {} condition".format(rule.id))
+    _LOG.debug("Checking for rule {}'s rule condition".format(rule.id))
     if rule.rule_condition is not None:
         if rule.rule_condition.evaluate(engine_obj):
-            _LOG.debug("Rule {} condition passed".format(rule.id))
+            _LOG.debug("Rule {}'s rule condition passed".format(rule.id))
             engine_obj.englog.add(enginelog.CONDITION_PASSED, {
                 "rule": rule.id,
                 "condition_type": "rule condition",
                 "condition": rule.rule_condition.serialize()
             })
         else:
-            _LOG.debug("Rule {} condition is false: {}".format(
+            _LOG.debug("Rule {}'s rule condition is false: {}".format(
                 rule.id, rule.rule_condition.serialize()))
             return
+    else:
+        _LOG.debug("Rule {} does not have a rule condition".format(rule.id))
 
     # Run Actions
-    _LOG.debug("Runing action sequences on rule: {}".format(rule.id))
+    _LOG.debug("Proceeding to run rule {}'s action sequences".format(rule.id))
     for seqId, action_seq in enumerate(rule.actions):
-        _LOG.debug("Running rule {} action seq# {}".format(rule.id, seqId))
+        _LOG.debug("Running rule {}'s action seq# {}".format(rule.id, seqId))
 
         if action_seq.action_condition is not None:
+            _LOG.debug(
+                "Checking rule {}'s action seq# {}'s action condition".format(rule.id, seqId))
             if action_seq.action_condition.evaluate(engine_obj):
-                _LOG.debug("Rule {} action condition {} passed".format(rule.id, seqId))
+                _LOG.debug(
+                    "Rule {}'s action seq# {} action condition passed".format(rule.id, seqId))
                 engine_obj.englog.add(enginelog.CONDITION_PASSED, {
                     "rule": rule.id,
                     "condition_type": "action condition",
                     "action_seq": seqId,
-                    "condition": rule.rule_condition.serialize()
+                    "condition": action_seq.action_condition.serialize()
                 })
 
             else:
                 _LOG.debug(
-                    "Rule {} action condition {} is false (rule will not run): {}".format(
+                    "Rule {}'s action seq# {}'s action condition is false "
+                    + "(rule will not run): {}".format(
                         rule.id, seqId, action_seq.action_condition.serialize()))
                 continue
 
         # Run the action sequence
-        await rule_objects.async_run_action_seq(rule, seqId, engine_obj)
-        _LOG.debug("Rule {} action seq# {} complete".format(rule.id, seqId))
+        for actId, action in enumerate(action_seq.action_sequence):
+
+            success = await action.async_execute(engine_obj)
+            if not success:
+                if isinstance(action, action_objects.ConditionAction):
+                    _LOG.debug(
+                        ("Rule {} aborting action seq# {} due to false "
+                            + "condition at action# {}").format(rule.id, seqId, actId))
+                else:
+                    _LOG.error(
+                        ("Rule {} aborting action seq# {} due to action "
+                            + "failure at action# {}").format(rule.id, seqId, actId))
+                return
+
+        _LOG.debug("Rule {}'s action seq# {} complete".format(rule.id, seqId))
 
     _LOG.debug("Rule {} processing completed".format(rule.id))
     engine_obj.englog.add(enginelog.RULE_COMPLETED, {"rule": rule.id})

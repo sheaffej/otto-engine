@@ -1,0 +1,32 @@
+{
+    "id": "action_condition",
+    "description": "Test a rule with an action condition",
+    "enabled": true,
+    "group": "test",
+    "notes": "",
+    "triggers": [
+      {
+        "platform": "state",
+        "entity_id": "input_boolean.test",
+        "to": "on"
+      }
+    ],   
+    "actions": [
+      {
+        "action_condition": {
+            "condition": "state",
+            "entity_id": "input_boolean.action_light",
+            "state": "off"
+        },
+        "action_sequence": [
+            {
+                "domain": "input_boolean",
+                "service": "turn_on",
+                "data": {
+                  "entity_id": "input_boolean.action_light"
+                }
+            }
+        ]
+      }
+    ]
+  }

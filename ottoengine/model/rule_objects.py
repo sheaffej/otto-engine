@@ -90,26 +90,3 @@ def get_listeners(rule: AutomationRule) -> list:
     for trigger in rule.triggers:
             listeners.append(HassListener(rule, trigger))
     return listeners
-
-
-async def async_run_action_seq(rule: AutomationRule, seqId: int, engine):
-    action_seq = rule.actions[seqId]
-    _LOG.debug("Evaluating rule {} action seq# {}".format(rule.id, seqId))
-    if (action_seq.action_condition is None) or (action_seq.action_condition.evaluate(engine)):
-        _LOG.debug("Rule {} action seq# {} will run".format(rule.id, seqId))
-        for actId, action in enumerate(action_seq.action_sequence):
-
-            success = await action.async_execute(engine)
-            if not success:
-                if isinstance(action, action_objects.ConditionAction):
-                    _LOG.info(
-                        ("Rule {} aborting action seq# {} due to false "
-                            + "condition at action# {}").format(rule.id, seqId, actId))
-                else:
-                    _LOG.warn(
-                        ("Rule {} aborting action seq# {} due to action "
-                            + "failure at action# {}").format(rule.id, seqId, actId))
-                return
-    else:
-        _LOG.debug("Rule {} action seq# {} will not run: {}".format(
-            rule.id, seqId, action.action_condition.serialize()))

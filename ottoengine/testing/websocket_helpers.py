@@ -1,8 +1,8 @@
-import datetime
 
 from ottoengine import helpers
 
-def event_state_changed(id, entity_id, old_state, new_state):
+
+def event_state_changed(id, entity_id: str, old_state: str, new_state: str):
     now = helpers.nowutc()
     event = {
         "id": id,
@@ -33,7 +33,7 @@ def event_state_changed(id, entity_id, old_state, new_state):
     return event
 
 
-def event_hass_event(id, event_type, event_data):
+def event_hass_event(id, event_type: str, event_data: str):
     now = helpers.nowutc()
     event = {
         "id": id,

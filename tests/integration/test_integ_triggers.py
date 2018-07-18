@@ -9,6 +9,7 @@ from ottoengine.testing.rule_helpers import AutomationRuleSpec
 from ottoengine.model.trigger_objects import StateTrigger, NumericStateTrigger, EventTrigger
 from ottoengine.model.action_objects import ServiceAction
 from ottoengine.model.rule_objects import RuleAction
+from ottoengine.model.condition_objects import StateCondition
 from ottoengine.testing import websocket_helpers, restapi_helpers
 
 

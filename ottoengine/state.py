@@ -43,10 +43,10 @@ class OttoEngineState(object):
         return self._engine_states.get(key)
 
     # Entity states
-    def set_entity_state(self, entity_id, state):
+    def set_entity_state(self, entity_id, state_obj):
         '''Sets an entity state'''
-        _LOG.debug("set_entity_state({}, {})".format(entity_id, state))
-        self._entity_states[entity_id] = state
+        _LOG.debug("{} -> {}".format(entity_id, state_obj.state))
+        self._entity_states[entity_id] = state_obj
 
     def get_entity_state(self, entity_id):
         '''Sets an entity state'''
