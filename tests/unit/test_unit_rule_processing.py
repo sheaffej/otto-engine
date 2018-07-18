@@ -10,7 +10,7 @@ import unittest
 from ottoengine import engine as engine_mod, enginelog as enginelog_mod
 from ottoengine import persistence, helpers
 from ottoengine.utils import setup_logging
-from ottoengine.fibers import clock as clock_mod, hass_websocket
+from ottoengine.fibers import clock as clock_mod, hass_websocket_reader
 from ottoengine.testing import websocket_helpers
 
 tz_name = "America/Los_Angeles"
@@ -78,7 +78,7 @@ class TestRuleProcessing(unittest.TestCase):
     async def _set_and_verify_entity_state(self, entity_id: str,
                                            new_state: str, old_state: str):
         event = websocket_helpers.event_state_changed(1, entity_id, old_state, new_state)
-        await hass_websocket._process_event_response(self.engine_obj, event)
+        await hass_websocket_reader._process_event_response(self.engine_obj, event)
         self.assertEqual(
             self.engine_obj.states.get_entity_state(entity_id).state, new_state)
 

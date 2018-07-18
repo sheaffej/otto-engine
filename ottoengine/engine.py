@@ -4,9 +4,10 @@ import signal
 import sys
 import traceback
 
+from ottoengine import state, const, persistence, config, helpers, enginelog, hass_websocket_client
 from ottoengine.model import dataobjects, trigger_objects, rule_objects, action_objects
-from ottoengine import state, const, persistence, config, helpers, enginelog
-from ottoengine.fibers import clock, hass_websocket, hass_websocket_client, test_websocket
+from ottoengine.fibers import clock, hass_websocket_reader
+from ottoengine.testing import test_websocket
 
 
 ASYNC_TIMEOUT_SECS = 5
@@ -234,7 +235,8 @@ class OttoEngine(object):
             self._config.hass_host, self._config.hass_port,
             self._config.hass_password, self._config.hass_ssl
         )
-        self._fiber_websocket_reader = hass_websocket.HassWebSocketReader(self, self._websocket)
+        self._fiber_websocket_reader = hass_websocket_reader.HassWebSocketReader(
+            self, self._websocket)
 
         # Run the Websocket Reader Fiber
         self._run_fiber(self._fiber_websocket_reader)
