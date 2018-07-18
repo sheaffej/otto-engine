@@ -2,20 +2,18 @@
 
 import asyncio
 import datetime as dt
-import logging
 import os
 import pytz
 import unittest
 
-from ottoengine import engine as engine_mod, enginelog as enginelog_mod
+from ottoengine import config, engine, enginelog
 from ottoengine import persistence, helpers
-from ottoengine.utils import setup_logging
-from ottoengine.fibers import clock as clock_mod, hass_websocket_reader
+from ottoengine.utils import setup_debug_logging
+from ottoengine.fibers import clock, hass_websocket_reader
 from ottoengine.testing import websocket_helpers
 
 tz_name = "America/Los_Angeles"
-setup_logging(logging.DEBUG)
-_LOG = logging.getLogger(__name__)
+setup_debug_logging()
 
 
 class MockWebSocketClient():
@@ -33,13 +31,23 @@ class MockWebSocketClient():
 
 class TestRuleProcessing(unittest.TestCase):
 
+    def __init__(self, *args, **kwargs):
+        super(TestRuleProcessing, self).__init__(*args, **kwargs)
+        # Initialize with defaults and to enable linting/ac
+        # Test should call _setup_engine() to override any of these attributes
+        self.loop = _get_event_loop()
+        self.config = config.EngineConfig()
+        self.clock = clock.EngineClock(self.config.tz, self.loop)
+        self.persist_mgr = persistence.PersistenceManager(self.config.json_rules_dir)
+        self.enlog = enginelog.EngineLog()
+        self.engine_obj = engine.OttoEngine(
+            self.config, self.loop, self.clock, self.persist_mgr, self.enlog)
+
     def setUp(self):
         print()
         mydir = os.path.dirname(__file__)
         self.test_rules_dir = os.path.join(mydir, "../json_test_rules")
         self.realworld_rules_dir = os.path.join(mydir, "../json_realworld_rules")
-        self.loop = get_event_loop()
-        self.engine_obj = None
 
     # ~~~~~~~~~
     #  Helpers
@@ -49,17 +57,27 @@ class TestRuleProcessing(unittest.TestCase):
         self.sim_time = dt.datetime.now(pytz.utc)  # Set a type for linting/ac
         helpers.nowutc = lambda: self.sim_time
 
-    def _setup_engine_for_test_json(self):
-        return self._setup_engine(None, self.test_rules_dir)
+    def _setup_engine(self, config_obj: config.EngineConfig = None,
+                      loop: asyncio.AbstractEventLoop = None,
+                      clock_obj: clock.EngineClock = None,
+                      persist_mgr: persistence.PersistenceManager = None,
+                      enlog: enginelog.EngineLog = None):
+        # These have setup with defautls by the constructor but can be overridden
+        # if they are supplied as arguments to this function
+        if config_obj:
+            self.config = config_obj
+        if loop:
+            self.loop = loop
+        if clock_obj:
+            self.clock = clock_obj
+        if enlog:
+            self.enlog = enlog
+        if persist_mgr:
+            self.persist_mgr = persistence.PersistenceManager(config.json_rules_dir)
 
-    def _setup_engine_for_realworld_json(self):
-        return self._setup_engine(None, self.realworld_rules_dir)
-
-    def _setup_engine(self, config, json_dir):
-        clock = clock_mod.EngineClock(tz_name, loop=self.loop)
-        persistence_mgr = persistence.PersistenceManager(json_dir)
-        enginelog = enginelog_mod.EngineLog()
-        self.engine_obj = engine_mod.OttoEngine(config, self.loop, clock, persistence_mgr, enginelog)
+        # Always recreate the engine object when this function is called
+        self.engine_obj = engine.OttoEngine(
+            self.config, self.loop, self.clock, self.persist_mgr, self.enlog)
         self.engine_obj._websocket = MockWebSocketClient()
 
     async def _load_one_rule(self, rule_id, json_dir):
@@ -93,7 +111,9 @@ class TestRuleProcessing(unittest.TestCase):
     # ~~~~~~~
     def test_2764351_away_lights(self):
         rule_id = "2764351"
-        self._setup_engine_for_realworld_json()
+        cfg = config.EngineConfig()
+        cfg.json_rules_dir = self.realworld_rules_dir
+        self._setup_engine(config_obj=cfg)
 
         # Set the simulation time
         self._monkey_patch_nowutc()
@@ -133,7 +153,9 @@ class TestRuleProcessing(unittest.TestCase):
 
     def test_action_condition(self):
         rule_id = "action_condition"
-        self._setup_engine_for_test_json()
+        cfg = config.EngineConfig()
+        cfg.json_rules_dir = self.test_rules_dir
+        self._setup_engine(config_obj=cfg)
 
         # Set the simulation time
         self.sim_time = helpers.nowutc()
@@ -158,7 +180,9 @@ class TestRuleProcessing(unittest.TestCase):
 
     def test_rule_condition(self):
         rule_id = "rule_condition"
-        self._setup_engine_for_test_json()
+        cfg = config.EngineConfig()
+        cfg.json_rules_dir = self.test_rules_dir
+        self._setup_engine(config_obj=cfg)
 
         # Set the simulation time
         self.sim_time = helpers.nowutc()
@@ -200,7 +224,7 @@ class TestRuleProcessing(unittest.TestCase):
         self.assertEqual(len(self.engine_obj._websocket.service_calls), 0)
 
 
-def get_event_loop() -> asyncio.AbstractEventLoop:
+def _get_event_loop() -> asyncio.AbstractEventLoop:
     """ This simply wraps the asyncio function so we have typing for autocomplet/linting"""
     return asyncio.get_event_loop()
 

@@ -204,8 +204,7 @@ class OttoEngine(object):
             spec = clock.TimeSpec.from_dict(spec_dict)
             next_time = spec.next_time_from(helpers.nowutc()).isoformat()
         except Exception as e:
-            message = "Exception checking TimeSpec: {}".format(sys.exc_info()[1])
-            message += " || Spec: {}".format(spec_dict)
+            message = "Exception checking TimeSpec: {} ({})".format(spec_dict, sys.exc_info()[1])
             _LOG.error(message)
             return {"success": False, "message": message}
         return {"success": True, "next_time": next_time}
@@ -262,6 +261,7 @@ class OttoEngine(object):
         _LOG.info("Loading rules from persistence")
 
         rules = self._persistence_mgr.get_rules(self._config.json_rules_dir)
+        _LOG.info("{} rules found in {}".format(len(rules), self._config.json_rules_dir))
         for rule in rules:
             await self._async_load_rule(rule)
 

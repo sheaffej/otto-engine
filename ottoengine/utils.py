@@ -29,3 +29,8 @@ def setup_logging(log_level):
         print("Failed to import colorlog module...exiting")
         traceback.print_exc()
         sys.exit(1)
+
+
+def setup_debug_logging():
+    setup_logging(logging.DEBUG)
+    logging.getLogger().debug("Debug logging configured")
