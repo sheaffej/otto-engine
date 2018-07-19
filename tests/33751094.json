@@ -1,1 +1,0 @@
-{"id": "33751094", "triggers": [{"platform": "time", "tz": "America/Los_Angeles"}], "enabled": true, "description": "action condition test", "notes": "", "actions": [{"action_sequence": [{"delay": "00:00:01"}], "action_condition": {"condition": "state", "state": "above_horizon", "entity_id": "sun.sun"}, "description": null}], "group": "test"}
