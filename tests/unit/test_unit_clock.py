@@ -85,6 +85,41 @@ class TestClock(unittest.TestCase):
             len(self.clock.timeline), 0,
             msg="Expecing an empty timeline, but it found non-empty")
 
+    def test_except_invalid_action_function(self):
+        spec = clock.TimeSpec.from_dict({"tz": "UTC"})
+        spec_id = uuid.uuid4()
+
+        # None reference should fail the assert
+        self.assertRaises(
+            AssertionError,
+            self.clock.add_timespec_action,
+            id=spec_id, action_function=None,
+            timespec=spec, nowtime=nowutc()
+        )
+
+        # Non-async function should fail the assert
+        def _not_async_function():
+            pass
+
+        self.assertRaises(
+            AssertionError,
+            self.clock.add_timespec_action,
+            id=spec_id, action_function=_not_async_function,
+            timespec=spec, nowtime=nowutc()
+        )
+
+        # This should pass
+        async def _is_async_function():
+            pass
+
+        try:
+            self.clock.add_timespec_action(
+                id=spec_id, action_function=_is_async_function,
+                timespec=spec, nowtime=nowutc()
+            )
+        except AssertionError as e:
+            self.fail(str(e))
+
 
 class TestTimeSpec(unittest.TestCase):
     def setUp(self):
