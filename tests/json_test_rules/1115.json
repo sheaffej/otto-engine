@@ -1,7 +1,7 @@
 {
   "id": "1115",
   "description": "Time Trigger Test 5: 18:30a Fri/Sat/Sun",
-  "enabled": false,
+  "enabled": true,
   "group": "Test",
   "notes": "",
   "triggers": [

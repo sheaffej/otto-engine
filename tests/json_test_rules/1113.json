@@ -1,7 +1,7 @@
 {
   "id": "1113",
   "description": "Time Trigger Test 3: every 3 minutes, UTC",
-  "enabled": false,
+  "enabled": true,
   "group": "Test",
   "notes": "",
   "triggers": [

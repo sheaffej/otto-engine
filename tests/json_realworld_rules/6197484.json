@@ -1,1 +1,48 @@
-{"enabled": false, "triggers": [{"tz": "America/Los_Angeles", "platform": "time", "minute": "*/5"}], "description": "Alert when Garage left open", "actions": [{"action_condition": {"conditions": [{"state": "on", "condition": "state", "entity_id": "input_boolean.is_sleeping"}, {"state": "off", "condition": "state", "entity_id": "input_boolean.home_is_occupied"}], "condition": "or"}, "description": "Alert if open when sleeping, or not occupied", "action_sequence": [{"service": "slack_alert", "domain": "notify", "data": {"message": "Garage door is OPEN"}}]}], "rule_condition": {"state": "on", "condition": "state", "entity_id": "input_boolean.garage_door_open"}, "notes": "", "group": "Alerts", "id": "6197484"}
+{
+    "enabled": true,
+    "triggers": [
+        {
+            "tz": "America/Los_Angeles",
+            "platform": "time",
+            "minute": "*/5"
+        }
+    ],
+    "description": "Alert when Garage left open",
+    "actions": [
+        {
+            "action_condition": {
+                "conditions": [
+                    {
+                        "state": "on",
+                        "condition": "state",
+                        "entity_id": "input_boolean.is_sleeping"
+                    },
+                    {
+                        "state": "off",
+                        "condition": "state",
+                        "entity_id": "input_boolean.home_is_occupied"
+                    }
+                ],
+                "condition": "or"
+            },
+            "description": "Alert if open when sleeping, or not occupied",
+            "action_sequence": [
+                {
+                    "service": "slack_alert",
+                    "domain": "notify",
+                    "data": {
+                        "message": "Garage door is OPEN"
+                    }
+                }
+            ]
+        }
+    ],
+    "rule_condition": {
+        "state": "on",
+        "condition": "state",
+        "entity_id": "input_boolean.garage_door_open"
+    },
+    "notes": "",
+    "group": "Alerts",
+    "id": "6197484"
+}

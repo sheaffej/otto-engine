@@ -1,1 +1,34 @@
-{"id": "1998626", "description": "Sleeping off at 06:30", "enabled": true, "group": "Sleeping", "notes": "", "triggers": [{"platform": "time", "minute": "30", "hour": "6", "tz": "America/Los_Angeles"}], "rule_condition": {"condition": "state", "entity_id": "input_boolean.is_sleeping", "state": "on"}, "actions": [{"description": "Turn off sleeping", "action_sequence": [{"domain": "input_boolean", "service": "turn_off", "data": {"entity_id": "input_boolean.is_sleeping"}}]}]}
+{
+    "id": "1998626",
+    "description": "Sleeping off at 06:30",
+    "enabled": true,
+    "group": "Sleeping",
+    "notes": "",
+    "triggers": [
+        {
+            "platform": "time",
+            "minute": "30",
+            "hour": "6",
+            "tz": "America/Los_Angeles"
+        }
+    ],
+    "rule_condition": {
+        "condition": "state",
+        "entity_id": "input_boolean.is_sleeping",
+        "state": "on"
+    },
+    "actions": [
+        {
+            "description": "Turn off sleeping",
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_off",
+                    "data": {
+                        "entity_id": "input_boolean.is_sleeping"
+                    }
+                }
+            ]
+        }
+    ]
+}

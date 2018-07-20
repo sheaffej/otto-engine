@@ -1,1 +1,49 @@
-{"id": "4998123", "description": "Set John home/away", "enabled": true, "group": "State", "notes": "", "triggers": [{"platform": "state", "entity_id": "device_tracker.hassmqtt_j4iphone"}], "actions": [{"description": "John is home", "action_condition": {"condition": "state", "entity_id": "device_tracker.hassmqtt_j4iphone", "state": "home"}, "action_sequence": [{"domain": "input_boolean", "service": "turn_on", "data": {"entity_id": "input_boolean.john_is_home"}}]}, {"description": "John is away", "action_condition": {"condition": "state", "entity_id": "device_tracker.hassmqtt_j4iphone", "state": "not_home"}, "action_sequence": [{"domain": "input_boolean", "service": "turn_off", "data": {"entity_id": "input_boolean.john_is_home"}}]}]}
+{
+    "id": "4998123",
+    "description": "Set John home/away",
+    "enabled": true,
+    "group": "State",
+    "notes": "",
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "device_tracker.hassmqtt_j4iphone"
+        }
+    ],
+    "actions": [
+        {
+            "description": "John is home",
+            "action_condition": {
+                "condition": "state",
+                "entity_id": "device_tracker.hassmqtt_j4iphone",
+                "state": "home"
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_on",
+                    "data": {
+                        "entity_id": "input_boolean.john_is_home"
+                    }
+                }
+            ]
+        },
+        {
+            "description": "John is away",
+            "action_condition": {
+                "condition": "state",
+                "entity_id": "device_tracker.hassmqtt_j4iphone",
+                "state": "not_home"
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_off",
+                    "data": {
+                        "entity_id": "input_boolean.john_is_home"
+                    }
+                }
+            ]
+        }
+    ]
+}

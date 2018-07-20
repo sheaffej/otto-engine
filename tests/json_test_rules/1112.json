@@ -1,7 +1,7 @@
 {
   "id": "1112",
   "description": "Time Trigger Test 2: every 2 minutes; no TZ specified",
-  "enabled": false,
+  "enabled": true,
   "group": "Test",
   "notes": "",
   "triggers": [

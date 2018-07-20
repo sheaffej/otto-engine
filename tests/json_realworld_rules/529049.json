@@ -1,1 +1,57 @@
-{"id": "529049", "description": "Garage door open", "enabled": true, "group": "State", "notes": "", "triggers": [{"platform": "state", "entity_id": "binary_sensor.garage_door_sensor_sensor", "to": "on", "from": "off"}, {"platform": "state", "entity_id": "binary_sensor.garage_door_sensor_sensor", "to": "off", "from": "on"}], "actions": [{"description": "Set door open", "action_condition": {"condition": "state", "entity_id": "binary_sensor.garage_door_sensor_sensor", "state": "on"}, "action_sequence": [{"domain": "input_boolean", "service": "turn_on", "data": {"entity_id": "input_boolean.garage_door_open"}}]}, {"description": "Set door closed", "action_condition": {"condition": "state", "entity_id": "binary_sensor.garage_door_sensor_sensor", "state": "off"}, "action_sequence": [{"domain": "input_boolean", "service": "turn_off", "data": {"entity_id": "input_boolean.garage_door_open"}}]}]}
+{
+    "id": "529049",
+    "description": "Garage door open",
+    "enabled": true,
+    "group": "State",
+    "notes": "",
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "binary_sensor.garage_door_sensor_sensor",
+            "to": "on",
+            "from": "off"
+        },
+        {
+            "platform": "state",
+            "entity_id": "binary_sensor.garage_door_sensor_sensor",
+            "to": "off",
+            "from": "on"
+        }
+    ],
+    "actions": [
+        {
+            "description": "Set door open",
+            "action_condition": {
+                "condition": "state",
+                "entity_id": "binary_sensor.garage_door_sensor_sensor",
+                "state": "on"
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_on",
+                    "data": {
+                        "entity_id": "input_boolean.garage_door_open"
+                    }
+                }
+            ]
+        },
+        {
+            "description": "Set door closed",
+            "action_condition": {
+                "condition": "state",
+                "entity_id": "binary_sensor.garage_door_sensor_sensor",
+                "state": "off"
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_off",
+                    "data": {
+                        "entity_id": "input_boolean.garage_door_open"
+                    }
+                }
+            ]
+        }
+    ]
+}

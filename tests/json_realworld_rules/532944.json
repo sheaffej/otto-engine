@@ -1,1 +1,49 @@
-{"id": "532944", "description": "Motion in Kitchen", "enabled": true, "group": "State", "notes": "", "triggers": [{"platform": "state", "entity_id": "sensor.kitchen_sensor1_burglar"}], "actions": [{"description": "Set motion ON", "action_condition": {"condition": "numeric_state", "entity_id": "sensor.kitchen_sensor1_burglar", "above_value": 1.0}, "action_sequence": [{"domain": "input_boolean", "service": "turn_on", "data": {"entity_id": "input_boolean.motion_in_kitchen"}}]}, {"description": "Set motion OFF", "action_condition": {"condition": "numeric_state", "entity_id": "sensor.kitchen_sensor1_burglar", "below_value": 1.0}, "action_sequence": [{"domain": "input_boolean", "service": "turn_off", "data": {"entity_id": "input_boolean.motion_in_kitchen"}}]}]}
+{
+    "id": "532944",
+    "description": "Motion in Kitchen",
+    "enabled": true,
+    "group": "State",
+    "notes": "",
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "sensor.kitchen_sensor1_burglar"
+        }
+    ],
+    "actions": [
+        {
+            "description": "Set motion ON",
+            "action_condition": {
+                "condition": "numeric_state",
+                "entity_id": "sensor.kitchen_sensor1_burglar",
+                "above_value": 1.0
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_on",
+                    "data": {
+                        "entity_id": "input_boolean.motion_in_kitchen"
+                    }
+                }
+            ]
+        },
+        {
+            "description": "Set motion OFF",
+            "action_condition": {
+                "condition": "numeric_state",
+                "entity_id": "sensor.kitchen_sensor1_burglar",
+                "below_value": 1.0
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_off",
+                    "data": {
+                        "entity_id": "input_boolean.motion_in_kitchen"
+                    }
+                }
+            ]
+        }
+    ]
+}

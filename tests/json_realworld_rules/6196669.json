@@ -1,1 +1,54 @@
-{"id": "6196669", "description": "Is Cooler Outside", "enabled": true, "group": "State", "notes": "When Outside vs Downstairs temp crosses 0:\nAnd IF the outside temp change isn't anomalously rapid:\n- If above 1 --> Alert to close house\n- If below -1 --> Alert to open house", "triggers": [{"platform": "state", "entity_id": "sensor.temp_outside_diff_downstairs"}], "rule_condition": {"condition": "numeric_state", "entity_id": "sensor.std_dev_outside_change", "below_value": 2.0}, "actions": [{"description": "Cooler outside", "action_condition": {"condition": "numeric_state", "entity_id": "sensor.temp_outside_diff_downstairs", "below_value": -1.0}, "action_sequence": [{"domain": "input_boolean", "service": "turn_on", "data": {"entity_id": "input_boolean.is_cooler_outside"}}]}, {"description": "Warmer outside", "action_condition": {"condition": "numeric_state", "entity_id": "sensor.temp_outside_diff_downstairs", "above_value": 1.0}, "action_sequence": [{"domain": "input_boolean", "service": "turn_off", "data": {"entity_id": "input_boolean.is_cooler_outside"}}]}]}
+{
+    "id": "6196669",
+    "description": "Is Cooler Outside",
+    "enabled": true,
+    "group": "State",
+    "notes": "When Outside vs Downstairs temp crosses 0:\nAnd IF the outside temp change isn't anomalously rapid:\n- If above 1 --> Alert to close house\n- If below -1 --> Alert to open house",
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "sensor.temp_outside_diff_downstairs"
+        }
+    ],
+    "rule_condition": {
+        "condition": "numeric_state",
+        "entity_id": "sensor.std_dev_outside_change",
+        "below_value": 2.0
+    },
+    "actions": [
+        {
+            "description": "Cooler outside",
+            "action_condition": {
+                "condition": "numeric_state",
+                "entity_id": "sensor.temp_outside_diff_downstairs",
+                "below_value": -1.0
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_on",
+                    "data": {
+                        "entity_id": "input_boolean.is_cooler_outside"
+                    }
+                }
+            ]
+        },
+        {
+            "description": "Warmer outside",
+            "action_condition": {
+                "condition": "numeric_state",
+                "entity_id": "sensor.temp_outside_diff_downstairs",
+                "above_value": 1.0
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_off",
+                    "data": {
+                        "entity_id": "input_boolean.is_cooler_outside"
+                    }
+                }
+            ]
+        }
+    ]
+}

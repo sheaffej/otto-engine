@@ -1,0 +1,26 @@
+{
+  "id": "1116",
+  "description": "Disabled Time Trigger Test: every minute",
+  "enabled": false,
+  "group": "Test",
+  "notes": "",
+  "triggers": [
+    {
+      "platform": "time",
+      "tz": "America/Los_Angeles"
+    }
+  ],
+  "actions": [
+    {
+      "action_sequence": [
+          {
+              "domain": "input_boolean",
+              "service": "turn_on",
+              "data": {
+                "entity_id": "input_boolean.test"
+              }
+          }
+      ]
+    }
+  ]
+}

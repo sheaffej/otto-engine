@@ -1,7 +1,7 @@
 {
   "id": "1114",
   "description": "Time Trigger Test 4: 9:30a every day",
-  "enabled": false,
+  "enabled": true,
   "group": "Test",
   "notes": "",
   "triggers": [

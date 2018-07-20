@@ -1,1 +1,54 @@
-{"enabled": false, "triggers": [{"platform": "state", "entity_id": "input_boolean.teri_is_home"}], "description": "Alert when Teri arrives/leaves home", "actions": [{"action_condition": {"state": "on", "condition": "state", "entity_id": "input_boolean.teri_is_home"}, "description": "Teri is home", "action_sequence": [{"service": "slack_general", "domain": "notify", "data": {"message": "Teri is home"}}]}, {"action_condition": {"conditions": [{"state": "off", "condition": "state", "entity_id": "input_boolean.teri_is_home"}], "condition": "and"}, "description": "Teri is away", "action_sequence": [{"service": "slack_general", "domain": "notify", "data": {"message": "Teri is away"}}]}], "notes": "", "group": "Alerts", "id": "4997899"}
+{
+    "enabled": true,
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "input_boolean.teri_is_home"
+        }
+    ],
+    "description": "Alert when Teri arrives/leaves home",
+    "actions": [
+        {
+            "action_condition": {
+                "state": "on",
+                "condition": "state",
+                "entity_id": "input_boolean.teri_is_home"
+            },
+            "description": "Teri is home",
+            "action_sequence": [
+                {
+                    "service": "slack_general",
+                    "domain": "notify",
+                    "data": {
+                        "message": "Teri is home"
+                    }
+                }
+            ]
+        },
+        {
+            "action_condition": {
+                "conditions": [
+                    {
+                        "state": "off",
+                        "condition": "state",
+                        "entity_id": "input_boolean.teri_is_home"
+                    }
+                ],
+                "condition": "and"
+            },
+            "description": "Teri is away",
+            "action_sequence": [
+                {
+                    "service": "slack_general",
+                    "domain": "notify",
+                    "data": {
+                        "message": "Teri is away"
+                    }
+                }
+            ]
+        }
+    ],
+    "notes": "",
+    "group": "Alerts",
+    "id": "4997899"
+}

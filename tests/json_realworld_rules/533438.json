@@ -1,1 +1,53 @@
-{"id": "533438", "description": "Dark in Kitchen", "enabled": true, "group": "State", "notes": "", "triggers": [{"platform": "state", "entity_id": "sensor.kitchen_sensor1_luminance"}, {"platform": "state", "entity_id": "sensor.kitchen_sensor1_burglar"}], "actions": [{"description": "Set dark ON", "action_condition": {"condition": "numeric_state", "entity_id": "sensor.kitchen_sensor1_luminance", "below_value": 10.0}, "action_sequence": [{"domain": "input_boolean", "service": "turn_on", "data": {"entity_id": "input_boolean.dark_in_kitchen"}}]}, {"description": "Set dark OFF", "action_condition": {"condition": "numeric_state", "entity_id": "sensor.kitchen_sensor1_luminance", "above_value": 10.0}, "action_sequence": [{"domain": "input_boolean", "service": "turn_off", "data": {"entity_id": "input_boolean.dark_in_kitchen"}}]}]}
+{
+    "id": "533438",
+    "description": "Dark in Kitchen",
+    "enabled": true,
+    "group": "State",
+    "notes": "",
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "sensor.kitchen_sensor1_luminance"
+        },
+        {
+            "platform": "state",
+            "entity_id": "sensor.kitchen_sensor1_burglar"
+        }
+    ],
+    "actions": [
+        {
+            "description": "Set dark ON",
+            "action_condition": {
+                "condition": "numeric_state",
+                "entity_id": "sensor.kitchen_sensor1_luminance",
+                "below_value": 10.0
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_on",
+                    "data": {
+                        "entity_id": "input_boolean.dark_in_kitchen"
+                    }
+                }
+            ]
+        },
+        {
+            "description": "Set dark OFF",
+            "action_condition": {
+                "condition": "numeric_state",
+                "entity_id": "sensor.kitchen_sensor1_luminance",
+                "above_value": 10.0
+            },
+            "action_sequence": [
+                {
+                    "domain": "input_boolean",
+                    "service": "turn_off",
+                    "data": {
+                        "entity_id": "input_boolean.dark_in_kitchen"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -1,1 +1,49 @@
-{"actions": [{"action_sequence": [{"service": "slack_general", "domain": "notify", "data": {"message": "Garage door open"}}], "action_condition": {"condition": "state", "state": "on", "entity_id": "input_boolean.garage_door_open"}, "description": "Notify when open"}, {"action_sequence": [{"service": "slack_general", "domain": "notify", "data": {"message": "Garage door closed"}}], "action_condition": {"condition": "state", "state": "off", "entity_id": "input_boolean.garage_door_open"}, "description": "Notify when closed"}], "id": "441269", "group": "Alerts", "notes": "", "enabled": false, "triggers": [{"entity_id": "input_boolean.garage_door_open", "platform": "state"}], "description": "Notify when Garage Door opens/closes"}
+{
+    "actions": [
+        {
+            "action_sequence": [
+                {
+                    "service": "slack_general",
+                    "domain": "notify",
+                    "data": {
+                        "message": "Garage door open"
+                    }
+                }
+            ],
+            "action_condition": {
+                "condition": "state",
+                "state": "on",
+                "entity_id": "input_boolean.garage_door_open"
+            },
+            "description": "Notify when open"
+        },
+        {
+            "action_sequence": [
+                {
+                    "service": "slack_general",
+                    "domain": "notify",
+                    "data": {
+                        "message": "Garage door closed"
+                    }
+                }
+            ],
+            "action_condition": {
+                "condition": "state",
+                "state": "off",
+                "entity_id": "input_boolean.garage_door_open"
+            },
+            "description": "Notify when closed"
+        }
+    ],
+    "id": "441269",
+    "group": "Alerts",
+    "notes": "",
+    "enabled": true,
+    "triggers": [
+        {
+            "entity_id": "input_boolean.garage_door_open",
+            "platform": "state"
+        }
+    ],
+    "description": "Notify when Garage Door opens/closes"
+}

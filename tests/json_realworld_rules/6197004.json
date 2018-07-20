@@ -1,1 +1,49 @@
-{"id": "6197004", "description": "Alert when cooler/warmer outside", "enabled": false, "group": "Alerts", "notes": "", "triggers": [{"platform": "state", "entity_id": "input_boolean.is_cooler_outside"}], "actions": [{"description": "Alert when cooler outside", "action_condition": {"condition": "state", "entity_id": "input_boolean.is_cooler_outside", "state": "on"}, "action_sequence": [{"domain": "notify", "service": "slack_general", "data": {"message": "Outside is COOLER"}}]}, {"description": "Alert when warmer outside", "action_condition": {"condition": "state", "entity_id": "input_boolean.is_cooler_outside", "state": "off"}, "action_sequence": [{"domain": "notify", "service": "slack_general", "data": {"message": "Outside is WARMER"}}]}]}
+{
+    "id": "6197004",
+    "description": "Alert when cooler/warmer outside",
+    "enabled": true,
+    "group": "Alerts",
+    "notes": "",
+    "triggers": [
+        {
+            "platform": "state",
+            "entity_id": "input_boolean.is_cooler_outside"
+        }
+    ],
+    "actions": [
+        {
+            "description": "Alert when cooler outside",
+            "action_condition": {
+                "condition": "state",
+                "entity_id": "input_boolean.is_cooler_outside",
+                "state": "on"
+            },
+            "action_sequence": [
+                {
+                    "domain": "notify",
+                    "service": "slack_general",
+                    "data": {
+                        "message": "Outside is COOLER"
+                    }
+                }
+            ]
+        },
+        {
+            "description": "Alert when warmer outside",
+            "action_condition": {
+                "condition": "state",
+                "entity_id": "input_boolean.is_cooler_outside",
+                "state": "off"
+            },
+            "action_sequence": [
+                {
+                    "domain": "notify",
+                    "service": "slack_general",
+                    "data": {
+                        "message": "Outside is WARMER"
+                    }
+                }
+            ]
+        }
+    ]
+}

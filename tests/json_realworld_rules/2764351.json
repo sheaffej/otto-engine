@@ -1,1 +1,64 @@
-{"rule_condition": {"condition": "state", "state": "on", "entity_id": "input_boolean.vacation_mode"}, "description": "Away lights", "group": "Away", "enabled": false, "id": "2764351", "triggers": [{"hour": "19", "tz": "America/Los_Angeles", "platform": "time", "minute": "21"}, {"hour": "22", "tz": "America/Los_Angeles", "platform": "time", "minute": "07"}], "actions": [{"action_sequence": [{"domain": "scene", "data": {"entity_id": "scene.living_room_bright"}, "service": "turn_on"}], "description": "Turn on lights", "action_condition": {"condition": "time", "before": "20:00:00", "after": "19:00:00", "tz":"America/Los_Angeles"}}, {"action_sequence": [{"domain": "scene", "data": {"entity_id": "scene.all_lights_off"}, "service": "turn_on"}], "description": "Turn off lights", "action_condition": {"condition": "time", "before": "23:00:00", "after": "22:00:00", "tz":"America/Los_Angeles"}}], "notes": ""}
+{
+    "rule_condition": {
+        "condition": "state",
+        "state": "on",
+        "entity_id": "input_boolean.vacation_mode"
+    },
+    "description": "Away lights",
+    "group": "Away",
+    "enabled": true,
+    "id": "2764351",
+    "triggers": [
+        {
+            "hour": "19",
+            "tz": "America/Los_Angeles",
+            "platform": "time",
+            "minute": "21"
+        },
+        {
+            "hour": "22",
+            "tz": "America/Los_Angeles",
+            "platform": "time",
+            "minute": "07"
+        }
+    ],
+    "actions": [
+        {
+            "action_sequence": [
+                {
+                    "domain": "scene",
+                    "data": {
+                        "entity_id": "scene.living_room_bright"
+                    },
+                    "service": "turn_on"
+                }
+            ],
+            "description": "Turn on lights",
+            "action_condition": {
+                "condition": "time",
+                "before": "20:00:00",
+                "after": "19:00:00",
+                "tz": "America/Los_Angeles"
+            }
+        },
+        {
+            "action_sequence": [
+                {
+                    "domain": "scene",
+                    "data": {
+                        "entity_id": "scene.all_lights_off"
+                    },
+                    "service": "turn_on"
+                }
+            ],
+            "description": "Turn off lights",
+            "action_condition": {
+                "condition": "time",
+                "before": "23:00:00",
+                "after": "22:00:00",
+                "tz": "America/Los_Angeles"
+            }
+        }
+    ],
+    "notes": ""
+}

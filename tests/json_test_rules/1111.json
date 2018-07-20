@@ -1,7 +1,7 @@
 {
   "id": "1111",
   "description": "Time Trigger Test 1: every minute",
-  "enabled": false,
+  "enabled": true,
   "group": "Test",
   "notes": "",
   "triggers": [
