@@ -245,6 +245,7 @@ class EngineClock (fibers.Fiber):
             alarm = ClockAlarm(alarm_time)
             alarm.add_action(action)
             self._timeline.append(alarm)
+            _LOG.debug(self._format_timeline())
             return
 
         for pos, alarm in enumerate(self._timeline):

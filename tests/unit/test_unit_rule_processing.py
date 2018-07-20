@@ -223,6 +223,31 @@ class TestRuleProcessing(unittest.TestCase):
             self._set_and_verify_entity_state("input_boolean.test", "on", "off",))
         self.assertEqual(len(self.engine_obj._websocket.service_calls), 0)
 
+    def test_disabled_rule(self):
+        rule_id = "1116"
+        cfg = config.EngineConfig()
+        cfg.json_rules_dir = self.test_rules_dir
+        self._setup_engine(config_obj=cfg)
+
+        # Set the simulation time
+        self._monkey_patch_nowutc()
+        local_tz = pytz.timezone(tz_name)
+        self.sim_time = local_tz.localize(dt.datetime(2018, 7, 14, 9, 0, 0))
+
+        print("Loading the rule")
+        self.loop.run_until_complete(
+            self._load_one_rule(rule_id, self.test_rules_dir)
+        )
+
+        self.sim_time = local_tz.localize(dt.datetime(2018, 7, 14, 9, 1, 00))
+        print("Running sim at: ", str(helpers.nowutc()))
+        self.loop.run_until_complete(self.engine_obj._clock._async_tick(helpers.nowutc()))
+
+        # Rule should not fire since it's disabled
+        # self._verify_websocket_service_call(0, "input_boolean.test", "turn_on")
+        self.assertEqual(len(self.engine_obj._websocket.service_calls), 0)
+        self.engine_obj._websocket.clear()
+
 
 def _get_event_loop() -> asyncio.AbstractEventLoop:
     """ This simply wraps the asyncio function so we have typing for autocomplet/linting"""

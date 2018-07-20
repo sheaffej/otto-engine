@@ -355,6 +355,10 @@ async def async_invoke_rule(engine_obj: OttoEngine, rule: rule_objects.Automatio
     _LOG.debug("invoke_rule called for rule {}".format(rule.id))
     engine_obj.englog.add(enginelog.DEBUG, {"message": "engine.invoke_rule() called"})
 
+    if not rule.enabled:
+        _LOG.debug("Rule {} is not enabled".format(rule.id))
+        return
+
     # Evaluate Trigger
     if trigger is not None:
         if isinstance(trigger, trigger_objects.ListenerTrigger) and (event is not None):

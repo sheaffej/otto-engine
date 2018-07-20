@@ -3,8 +3,10 @@
 import asyncio
 import os
 import unittest
+import pytz
+import datetime as dt
 
-from ottoengine import engine, config, enginelog, persistence
+from ottoengine import engine, config, enginelog, persistence, helpers
 from ottoengine.utils import setup_debug_logging
 from ottoengine.fibers import clock
 
@@ -32,6 +34,9 @@ class TestEngine(unittest.TestCase):
         self.test_rules_dir = os.path.join(mydir, "../json_test_rules")
         self.realworld_rules_dir = os.path.join(mydir, "../json_realworld_rules")
 
+    # ~~~~~~~~~~~
+    #   Helpers
+    # ~~~~~~~~~~~
     def _setup_engine(self, config_obj: config.EngineConfig = None,
                       loop: asyncio.AbstractEventLoop = None,
                       clock_obj: clock.EngineClock = None,
@@ -54,6 +59,14 @@ class TestEngine(unittest.TestCase):
         self.engine_obj = engine.OttoEngine(
             self.config, self.loop, self.clock, self.persist_mgr, self.enlog)
 
+    def _monkey_patch_nowutc(self):
+        # Monkey patch nowutc() so we can control the exact time
+        self.sim_time = dt.datetime.now(pytz.utc)  # Set a type for linting/ac
+        helpers.nowutc = lambda: self.sim_time
+
+    # ~~~~~~~~~
+    #   Tests
+    # ~~~~~~~~~
     def test_check_timespec_success(self):
         tests = [
             {'tz': 'America/Los_Angeles'},
