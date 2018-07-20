@@ -43,7 +43,7 @@ class TestClock(unittest.TestCase):
             self.exec_time = nowtime
             print("Action executed at {}".format(self.exec_time))
 
-        self.clock.add_timespec_action(uuid.uuid4(), myfunc(), spec, nowtime)
+        self.clock.add_timespec_action(uuid.uuid4(), myfunc, spec, nowtime)
         print(self.clock._format_timeline())
 
         for i in range(65):
@@ -59,11 +59,15 @@ class TestClock(unittest.TestCase):
     def test_remove_action(self):
         """Tests the removal of a TimeSpec from the timeline
         """
+
+        async def _noop():
+            pass
+
         spec = clock.TimeSpec.from_dict({"tz": "UTC"})
         spec_id = uuid.uuid4()
         self.clock.add_timespec_action(
             id=spec_id,
-            action_function=None,
+            action_function=_noop,
             timespec=spec,
             nowtime=nowutc()
         )

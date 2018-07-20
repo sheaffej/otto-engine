@@ -300,7 +300,7 @@ class OttoEngine(object):
 
                     self._clock.add_timespec_action(
                         listener.trigger.id,
-                        async_time_triggered(),
+                        async_time_triggered,
                         listener.trigger.timespec,
                         helpers.nowutc()
                     )

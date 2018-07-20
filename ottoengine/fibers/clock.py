@@ -1,15 +1,17 @@
 import asyncio
-import datetime
-import pytz
 import croniter
+import datetime
+import inspect
+import pytz
 import logging
+# import pytz
 
 from ottoengine import fibers, helpers
 
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
 
-TICK_INTERVAL_SECONDS = 1  # Number of seconds between ticks
+TICK_INTERVAL_SECONDS = 10  # Number of seconds between ticks
 
 # Number of seconds past a scheduled event that it can still be executed
 # If the event isn't executed by this time after it's scheduled time
@@ -166,8 +168,15 @@ class EngineClock (fibers.Fiber):
             :param datetime.datetime nowtime: The current time used when determining the next time
                 to run the action_function
         """
+        # Action function should be a async function reference, but since
+        # it will be rescheduled after running, the function will be called
+        # multiple times. Therefore we store just the function reference in the
+        # TimeSpec action, and create the coroutine at the point in async_tick()
+        # when we are ready to schedule the function to run on the event loop
+        assert inspect.iscoroutinefunction(action_function), (
+            "TimeSpec action_function must be an async function reference."
+            " It also cannot be a couroutine object yet")
         action = AlarmTimeSpecAction(id, action_function, timespec)
-        # self._add_action_to_timeline(timespec.next_time_from_now(), action)
         self._add_action_to_timeline(timespec.next_time_from(nowtime), action)
 
     def remove_timespec_action(self, id):
@@ -226,7 +235,9 @@ class EngineClock (fibers.Fiber):
             # Process its actions
             for action in alarm.actions:
                 _LOG.debug("Running alarm action")
-                self._loop.create_task(action.action_function)
+                # This is where we create the coroutine object from the action
+                # function reference - note the () on action_function
+                self._loop.create_task(action.action_function())
 
                 # Schedule the action's next time
                 if isinstance(action, AlarmTimeSpecAction):
