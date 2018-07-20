@@ -1,4 +1,4 @@
-# `otto-engine` ![](https://travis-ci.org/sheaffej/otto-engine.svg?branch=master) [![Coverage Status](https://coveralls.io/repos/github/sheaffej/otto-engine/badge.svg?branch=master)](https://coveralls.io/github/sheaffej/otto-engine?branch=master)
+# `otto-engine` [![Build Status](https://travis-ci.org/sheaffej/otto-engine.svg?branch=master)](https://travis-ci.org/sheaffej/otto-engine) [![Coverage Status](https://coveralls.io/repos/github/sheaffej/otto-engine/badge.svg?branch=master)](https://coveralls.io/github/sheaffej/otto-engine?branch=master)
 
 An automation engine for [Home Assistant](https://www.home-assistant.io/).
 
