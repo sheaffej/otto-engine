@@ -353,7 +353,6 @@ class OttoEngine(object):
 async def async_invoke_rule(engine_obj: OttoEngine, rule: rule_objects.AutomationRule,
                             trigger=None, event: dataobjects.HassEvent = None):
     _LOG.debug("invoke_rule called for rule {}".format(rule.id))
-    engine_obj.englog.add(enginelog.DEBUG, {"message": "engine.invoke_rule() called"})
 
     if not rule.enabled:
         _LOG.debug("Rule {} is not enabled".format(rule.id))
