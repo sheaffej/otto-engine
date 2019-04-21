@@ -2,7 +2,7 @@
 OTTO_REST_PORT = 5000
 HASS_HOST = localhost
 HASS_PORT = 8123
-HASS_PASSWORD = hasspassword
+HASS_TOKEN = a_token
 HASS_SSL = no
 TZ = America/Los_Angeles
 JSON_RULES_DIR = json_rules

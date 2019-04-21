@@ -232,7 +232,7 @@ class OttoEngine(object):
         # Initialize the websocket
         self._websocket = hass_websocket_client.AsyncHassWebsocket(
             self._config.hass_host, self._config.hass_port,
-            self._config.hass_password, self._config.hass_ssl
+            self._config.hass_token, self._config.hass_ssl
         )
         self._fiber_websocket_reader = hass_websocket_reader.HassWebSocketReader(
             self, self._websocket)
