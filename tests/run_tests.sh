@@ -1,4 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
+
+echo
+echo "~~~~~~~~~~~~~~~~~~"
+echo "Running Unit Tests"
+echo "~~~~~~~~~~~~~~~~~~"
+pytest -v --cache-clear --cov=/app/ottoengine /app/tests/unit
+
+# Exit if only running unit tests
+if [[ $1 == 'unit' ]]; then
+    exit
+fi
+
+
+echo
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
+echo "Running Integration Tests"
+echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
@@ -21,9 +39,5 @@ echo "Starting otto-engine ["$(date)"]"
 sleep 1
 
 echo
-pytest -v --cache-clear --cov=ottoengine tests/
+pytest -v --cache-clear /app/tests/integration
 
-echo
-echo "Stopping otto-engine ["$(date)"]"
-kill -9 $(ps | grep run_otto.py | grep -v grep | awk '{print $1}')
-echo

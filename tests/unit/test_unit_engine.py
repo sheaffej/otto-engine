@@ -76,7 +76,7 @@ class TestEngine(unittest.TestCase):
             result = self.engine_obj.check_timespec_threadsafe(test)
             print(test, "-->", result)
             self.assertTrue("success" in result)
-            self.assertEquals(result.get("success"), True)
+            self.assertEqual(result.get("success"), True)
 
     def test_check_timespec_failure(self):
         tests = [
@@ -87,7 +87,7 @@ class TestEngine(unittest.TestCase):
             result = self.engine_obj.check_timespec_threadsafe(test)
             print(test, "-->", result)
             self.assertTrue("success" in result)
-            self.assertEquals(result.get("success"), False)
+            self.assertEqual(result.get("success"), False)
 
     def test_async_load_rules(self):
         cfg = config.EngineConfig()
