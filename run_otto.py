@@ -4,13 +4,16 @@ import threading
 import logging
 import urllib.request
 import sys
+import os
 
 from ottoengine import engine, restapi, config, persistence, utils, enginelog
 from ottoengine.fibers import clock
 
+CONFIG_DIR = "/config"
+
 # Load the config
 try:
-    config = config.EngineConfig().load()
+    config = config.EngineConfig(config_dir=CONFIG_DIR).load()
 except Exception:
     print("Error encountered loading configuration file")
     print("{} {}".format(sys.exc_info()[0], sys.exc_info()[1]))

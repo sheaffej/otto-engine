@@ -3,7 +3,12 @@ import logging
 import os
 import shutil
 
+<<<<<<< HEAD
 CONFIG_EXAMPLE = "config.ini.example"
+=======
+CONFIG_FILE = "config.ini"
+CONFIG_EXAMPLE = "/app/config.ini.example"
+>>>>>>> dev
 
 
 def _parse_boolean(val: str):
@@ -24,8 +29,8 @@ def _parse_int(val: str):
 
 class EngineConfig:
 
-    def __init__(self, config_file="config.ini"):
-        self._config_file = config_file
+    def __init__(self, config_dir="/config"):
+        self._config_file = os.path.join(config_dir, CONFIG_FILE)
         self._config = configparser.ConfigParser()
 
         self.rest_port = 5000
