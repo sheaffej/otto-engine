@@ -48,19 +48,27 @@ fi
 echo
 echo "Starting otto-engine ["$(date)"]"
 <<<<<<< HEAD
+/app/run_otto.py test &> /config/run_otto.log &
+=======
+<<<<<<< HEAD
 ./run_otto.py test &> run_otto.log &
 # ./run_otto.py test 
 =======
 /app/run_otto.py test &> /config/run_otto.log &
 >>>>>>> dev
+>>>>>>> master
 
 # Let async engine setup complete before proceeding
 sleep 1
 
 echo
 <<<<<<< HEAD
+pytest -v --cache-clear /app/tests/integration
+=======
+<<<<<<< HEAD
 pytest -v --cache-clear tests/integration
 =======
 pytest -v --cache-clear /app/tests/integration
 >>>>>>> dev
+>>>>>>> master
 
