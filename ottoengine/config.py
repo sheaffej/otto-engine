@@ -3,17 +3,8 @@ import logging
 import os
 import shutil
 
-<<<<<<< HEAD
 CONFIG_FILE = "config.ini"
 CONFIG_EXAMPLE = "/app/config.ini.example"
-=======
-<<<<<<< HEAD
-CONFIG_EXAMPLE = "config.ini.example"
-=======
-CONFIG_FILE = "config.ini"
-CONFIG_EXAMPLE = "/app/config.ini.example"
->>>>>>> dev
->>>>>>> master
 
 
 def _parse_boolean(val: str):
