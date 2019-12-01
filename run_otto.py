@@ -11,7 +11,7 @@ from ottoengine.fibers import clock
 # Load the config
 try:
     config = config.EngineConfig().load()
-except Exception as e:
+except Exception:
     print("Error encountered loading configuration file")
     print("{} {}".format(sys.exc_info()[0], sys.exc_info()[1]))
     sys.exit(1)

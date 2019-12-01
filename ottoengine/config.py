@@ -1,6 +1,9 @@
 import configparser
 import logging
 import os
+import shutil
+
+CONFIG_EXAMPLE = "config.ini.example"
 
 
 def _parse_boolean(val: str):
@@ -21,15 +24,15 @@ def _parse_int(val: str):
 
 class EngineConfig:
 
-    def __init__(self):
-        self._config_file = "config.ini"
+    def __init__(self, config_file="config.ini"):
+        self._config_file = config_file
         self._config = configparser.ConfigParser()
 
         self.rest_port = 5000
         self.test_websocket_port = None  # Normally the HA port 8123
         self.hass_host = "localhost"
         self.hass_port = 8123
-        self.hass_password = None
+        self.hass_token = None
         self.hass_ssl = False
         self.tz = "America/Los_Angeles"
         self.json_rules_dir = "./json_rules"
@@ -54,6 +57,9 @@ class EngineConfig:
 
     def _load_config_file(self):
         # Load configuration file
+        if not os.path.isfile(self._config_file):
+            shutil.copy(CONFIG_EXAMPLE, self._config_file)
+
         files = [self._config_file]
         if "OTTO_ENGINE_HOME" in os.environ:
             files.append(os.path.join(os.environ["OTTO_ENGINE_HOME"], self._config_file))
@@ -64,7 +70,7 @@ class EngineConfig:
         self.rest_port = _parse_int(self._get("ENGINE", "OTTO_REST_PORT", required=True))
         self.hass_host = self._get("ENGINE", "HASS_HOST", required=True)
         self.hass_port = _parse_int(self._get("ENGINE", "HASS_PORT", required=True))
-        self.hass_password = self._get("ENGINE", "HASS_PASSWORD", required=True)
+        self.hass_token = self._get("ENGINE", "HASS_TOKEN", required=True)
         self.hass_ssl = _parse_boolean(self._get("ENGINE", "HASS_SSL", required=True))
         self.tz = self._get("ENGINE", "TZ", required=True)
         self.json_rules_dir = self._get("ENGINE", "JSON_RULES_DIR", required=True)

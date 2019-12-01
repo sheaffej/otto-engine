@@ -9,12 +9,12 @@ class TestConfig(unittest.TestCase):
 
     def test_read_parameters(self):
         params = [
-            # INI section, INI parameter, INI value, Obj attribute, Value
+            # INI parameter, INI value, Obj attribute, Value
 
             ("OTTO_REST_PORT", "5000", "rest_port", 5000),
             ("HASS_HOST", "localhost", "hass_host", "localhost"),
             ("HASS_PORT", "8123", "hass_port", 8123),
-            ("HASS_PASSWORD", "password", "hass_password", "password"),
+            ("HASS_TOKEN", "a_token", "hass_token", "a_token"),
             ("HASS_SSL", "no", "hass_ssl", False),
             ("TZ", "America/Los_Angeles", "tz", "America/Los_Angeles"),
             ("JSON_RULES_DIR", "json_rules", "json_rules_dir", "json_rules"),

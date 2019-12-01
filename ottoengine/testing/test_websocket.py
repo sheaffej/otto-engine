@@ -7,7 +7,7 @@ from ottoengine.fibers import Fiber
 _LOG = logging.getLogger(__name__)
 # _LOG.setLevel(logging.DEBUG)
 
-HOST = "localhost"
+HOST = "127.0.0.1"
 
 
 class TestWebSocketServer(Fiber):

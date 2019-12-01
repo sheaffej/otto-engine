@@ -8,7 +8,7 @@ import unittest
 
 from ottoengine.testing import restapi_helpers
 
-RESTURL = "http://localhost:5000"
+RESTURL = "http://127.0.0.1:5000"
 
 
 class TestRulePersistence(unittest.TestCase):

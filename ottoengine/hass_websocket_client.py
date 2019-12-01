@@ -42,9 +42,9 @@ class WebSocketError(Exception):
 
 class AsyncHassWebsocket(object):
 
-    def __init__(self, host, port, password=None, use_ssl=False):
+    def __init__(self, host, port, token=None, use_ssl=False):
         self._url = 'ws://{}:{}/api/websocket'.format(host, port)
-        self._password = password
+        self._token = token
         self._use_ssl = use_ssl
         self._socket = None
         self._socket_connected = False
@@ -89,7 +89,7 @@ class AsyncHassWebsocket(object):
             return False
         self._socket_connected = True
 
-        if self._password is not None:
+        if self._token is not None:
             await self.async_authenticate()
 
         return True
@@ -106,7 +106,7 @@ class AsyncHassWebsocket(object):
         This method does not read the success/failure response.  That must
         be done by the websocket reader.
         '''
-        await self._socket.send(json.dumps({"type": "auth", "api_password": self._password}))
+        await self._socket.send(json.dumps({"type": "auth", "access_token": self._token}))
 
     async def async_ping(self):
         '''Sends a ping message to the server'''

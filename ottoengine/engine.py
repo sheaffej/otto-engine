@@ -232,7 +232,7 @@ class OttoEngine(object):
         # Initialize the websocket
         self._websocket = hass_websocket_client.AsyncHassWebsocket(
             self._config.hass_host, self._config.hass_port,
-            self._config.hass_password, self._config.hass_ssl
+            self._config.hass_token, self._config.hass_ssl
         )
         self._fiber_websocket_reader = hass_websocket_reader.HassWebSocketReader(
             self, self._websocket)
@@ -353,7 +353,6 @@ class OttoEngine(object):
 async def async_invoke_rule(engine_obj: OttoEngine, rule: rule_objects.AutomationRule,
                             trigger=None, event: dataobjects.HassEvent = None):
     _LOG.debug("invoke_rule called for rule {}".format(rule.id))
-    engine_obj.englog.add(enginelog.DEBUG, {"message": "engine.invoke_rule() called"})
 
     if not rule.enabled:
         _LOG.debug("Rule {} is not enabled".format(rule.id))
