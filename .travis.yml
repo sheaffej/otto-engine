@@ -1,22 +1,29 @@
-language: python
+language: mimimal
 
-python:
-  - "3.6"
+services:
+  - docker
+
+# language: python
+
+# python:
+#   - "3.6"
 
 install:
-  - pip install -r requirements.txt
-  - pip install pytest-cov coveralls
+  # - pip install -r requirements.txt
+  # - pip install pytest-cov coveralls
+  - docker build -t otto-engine .
 
-before_script:
-  - export PYTHONPATH=$PYTHONPATH:$(pwd)
-  - cp config.ini.example config.ini
+# before_script:
+#   - export PYTHONPATH=$PYTHONPATH:$(pwd)
+#   - cp config.ini.example config.ini
 
 script: 
-  - python run_otto.py test &> otto_engine.log &
-  - sleep 5 # Wait for otto-engine to connect to the TestWebSocketServer
-  - pytest -v --cov=ottoengine tests/
-  - pkill -9 -f run_otto.py
+  # - python run_otto.py test &> otto_engine.log &
+  # - sleep 5 # Wait for otto-engine to connect to the TestWebSocketServer
+  # - pytest -v --cov=ottoengine tests/
+  # - pkill -9 -f run_otto.py
+  - docker run --rm -e PYTEST_ADDOPTS="--color=yes" otto-engine /bin/bash -c "/app/tests/run_tests.sh; ls -l; cat run_otto.log"
 
-after_script:
-  - coveralls
-  - cat otto_engine.log
+# after_script:
+#   - coveralls
+#   - cat otto_engine.log

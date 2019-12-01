@@ -1,6 +1,9 @@
 import configparser
 import logging
 import os
+import shutil
+
+CONFIG_EXAMPLE = "config.ini.example"
 
 
 def _parse_boolean(val: str):
@@ -21,8 +24,8 @@ def _parse_int(val: str):
 
 class EngineConfig:
 
-    def __init__(self):
-        self._config_file = "config.ini"
+    def __init__(self, config_file="config.ini"):
+        self._config_file = config_file
         self._config = configparser.ConfigParser()
 
         self.rest_port = 5000
@@ -54,6 +57,9 @@ class EngineConfig:
 
     def _load_config_file(self):
         # Load configuration file
+        if not os.path.isfile(self._config_file):
+            shutil.copy(CONFIG_EXAMPLE, self._config_file)
+
         files = [self._config_file]
         if "OTTO_ENGINE_HOME" in os.environ:
             files.append(os.path.join(os.environ["OTTO_ENGINE_HOME"], self._config_file))

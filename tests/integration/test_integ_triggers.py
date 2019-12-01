@@ -13,9 +13,9 @@ from ottoengine.model.condition_objects import StateCondition
 from ottoengine.testing import websocket_helpers, restapi_helpers
 
 
-WSHOST = "localhost"
+WSHOST = "127.0.0.1"
 WSPORT = 8123
-RESTHOST = "localhost"
+RESTHOST = "127.0.0.1"
 RESTPORT = 5000
 
 RULEGROUP = "Testing"
