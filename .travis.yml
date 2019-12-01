@@ -1,18 +1,24 @@
 language: python
+python: 3.7
 
 services:
   - docker
 
 install:
-  - pip install coveralls
+  # - pip install coveralls
   - docker build -t otto-engine .
-  - mkdir $TRAVIS_BUILD_DIR/config
 
 script: 
-  - docker run --rm -e PYTEST_ADDOPTS="--color=yes" -v $TRAVIS_BUILD_DIR/config:/config otto-engine bash -c "cd /config; /app/tests/run_tests.sh"
+  - docker run --rm otto-engine pytest -v --color=yes --cov=ottoengine /app/tests/unit
+  - docker run -d --name otto-engine -e PYTEST_ADDOPTS="--color=yes" otto-engine /app/run_otto.py test
+  - sleep 1
+  - docker exec -it otto-engine pytest -v --color=yes /app/tests/integration
+  - docker stop otto-engine
+      
 
 after_script:
-  - cd $TRAVIS_BUILD_DIR/config && coveralls
-  - ls -la $TRAVIS_BUILD_DIR
-  - ls -la $TRAVIS_BUILD_DIR/config
-  - cat $TRAVIS_BUILD_DIR/config/run_otto.log
+  # - cd $TRAVIS_BUILD_DIR/config && coveralls
+  # - ls -la $TRAVIS_BUILD_DIR
+  # - ls -la $TRAVIS_BUILD_DIR/config
+  # - cat $TRAVIS_BUILD_DIR/config/run_otto.log
+  - docker logs otto-engine
