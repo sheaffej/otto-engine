@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -e
 
-IMAGE_NAME=otto-engine
+IMAGE_NAME=sheaffej/otto-engine
 CONTAINER_NAME=otto-engine
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo
 echo "~~~~~~~~~~~~~~~~~~"
 echo "Running Unit Tests"
 echo "~~~~~~~~~~~~~~~~~~"
 docker run --rm \
--v $DIR/..:/app \
+-v $MYDIR/..:/app \
 $IMAGE_NAME \
 pytest -v --cov=ottoengine /app/tests/unit
 
