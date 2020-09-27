@@ -25,13 +25,17 @@ echo
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "Running Integration Tests"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
-docker rm -f $CONTAINER_NAME 2> /dev/null
-docker run -d --name $CONTAINER_NAME $IMAGE_NAME /app/run_otto.py test
+# Create the otto-engine server
+docker rm -f $CONTAINER_NAME || echo
+docker run -d --name $CONTAINER_NAME -v $MYDIR/../config.ini:/config/config.ini $IMAGE_NAME /app/run_otto.py test
 sleep 1
+
+# Run the integration tests against the server
 docker exec -it $CONTAINER_NAME pytest -v /app/tests/integration
+
+# Show output and clean up
 docker exec -it $CONTAINER_NAME bash -c "ls -la /app; ls -la /config"
 docker stop $CONTAINER_NAME
-
 echo
 echo "To see otto-engine logs:  docker logs otto-engine"
 echo
