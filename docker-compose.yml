@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+    otto-engine:
+        build: .
+        image: sheaffej/otto-engine
+        container_name: otto-engine
+        volumes:
+            - ./config.ini:/config/config.ini:ro
+            - /home/jsheaffe/otto-rules:/app/json_rules
+        restart: always
+        network_mode: host
+        ports:
+            - 5601:5601
