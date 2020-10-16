@@ -5,7 +5,7 @@ services:
   - docker
 
 install:
-  - docker build -t sheaffej/otto-engine .
+  - ./docker_build.sh
 
 script: 
   - ./scripts/run_dev_tests.sh
