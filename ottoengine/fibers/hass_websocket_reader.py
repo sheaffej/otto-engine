@@ -130,7 +130,7 @@ async def _process_result_response(engine_obj, msg: dict):
                 engine_obj.states.set_service_info(service_domain)
             except Exception as e:
                 _LOG.warn(str(e))
-                _LOG.warn(f"domain_key: {domain_key}, service_domain: {service_domain}")
+                _LOG.warn(f"domain_key: {domain_key}")
 
 async def _process_event_response(engine_obj, msg: dict):
     event_obj = msg.get("event")
