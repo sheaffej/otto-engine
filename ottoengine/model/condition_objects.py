@@ -124,7 +124,7 @@ class NumericStateCondition(RuleCondition):
             except Exception:
                 raise helpers.ValidationError("below_value is not a number")
 
-        if not (self._above_value or self._below_value):
+        if (self._above_value is None and self._below_value is None):
             raise helpers.ValidationError(
                 "NumericStateCondition: either above_value or below_value must be specified "
                 + "({})".format(self._entity_id)
