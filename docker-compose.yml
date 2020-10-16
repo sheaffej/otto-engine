@@ -8,7 +8,7 @@ services:
             - ./config.ini:/config/config.ini:ro
             - /home/jsheaffe/otto-rules:/app/json_rules
         restart: always
-        user: 1000:1000
+        # user: 1000:1000
         network_mode: host
         ports:
             - 5601:5601

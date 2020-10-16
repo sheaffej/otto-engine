@@ -145,9 +145,9 @@ class NumericStateCondition(RuleCondition):
             ATTR_CONDITION: self._condition,
             ATTR_ENTITY_ID: self._entity_id
         }
-        if self._above_value:
+        if self._above_value is not None:
             d["above_value"] = self._above_value
-        if self._below_value:
+        if self._below_value is not None:
             d["below_value"] = self._below_value
         return d
 
