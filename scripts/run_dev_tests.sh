@@ -11,9 +11,17 @@ echo "~~~~~~~~~~~~~~~~~~"
 echo "Running Unit Tests"
 echo "~~~~~~~~~~~~~~~~~~"
 docker run --rm \
+-e TRAVIS_JOB_ID \
+-e TRAVIS_BRANCH \
+-e COVERALLS_REPO_TOKEN \
 -v $MYDIR/..:/app \
 $IMAGE_NAME \
-pytest -v --cov=ottoengine /app/tests/unit
+pytest -v /app/tests/unit
+# pytest -v --cov=ottoengine /app/tests/unit
+
+# if [[ ! -z ${TRAVIS_JOB_ID} ]]; then
+#     coveralls
+# fi
 
 # Exit if only running unit tests
 if [[ $1 == 'unit' ]]; then
