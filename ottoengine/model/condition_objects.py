@@ -104,8 +104,8 @@ class NumericStateCondition(RuleCondition):
     def __init__(self, entity_id, above_value=None, below_value=None):
         super().__init__("numeric_state")
         self._entity_id = entity_id             # string
-        self._above_value = None                # numeric
-        self._below_value = None                # numeric
+        self._above_value = above_value         # numeric
+        self._below_value = below_value         # numeric
 
         # Check that above_value & below_value are numbers
         if above_value is not None:
