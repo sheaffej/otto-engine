@@ -7,6 +7,7 @@ services:
         volumes:
             - ./config.ini:/config/config.ini:ro
             - /home/jsheaffe/otto-rules:/app/json_rules
+            - .:/app
         restart: always
         # user: 1000:1000
         network_mode: host

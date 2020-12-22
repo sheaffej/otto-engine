@@ -161,6 +161,8 @@ class AsyncHassWebsocket(object):
         #         "entity_id": "input_boolean.action_siren"
         #     }
         # }
+        _LOG = logging.getLogger(f"{__name__}.async_call_service")
+        _LOG.setLevel(logging.DEBUG)
         _LOG.debug("Websocket calling service: {}.{} with {}".format(
             service_call_info.domain, service_call_info.service, service_call_info.service_data)
         )

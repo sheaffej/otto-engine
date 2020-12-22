@@ -122,6 +122,8 @@ async def _process_result_response(engine_obj, msg: dict):
     elif isinstance(msg_result, dict):
 
         for domain_key in msg_result:
+            if domain_key in "context":
+                continue
             try:
                 service_dicts = msg_result.get(domain_key)
                 service_domain = dataobjects.ServiceRegistration.from_websocket_dict(
@@ -129,8 +131,7 @@ async def _process_result_response(engine_obj, msg: dict):
                 _LOG.debug("Registering service: {}".format(service_domain))
                 engine_obj.states.set_service_info(service_domain)
             except Exception as e:
-                _LOG.warn(str(e))
-                _LOG.warn(f"domain_key: {domain_key}")
+                _LOG.warn(f"Exception reading services response: {msg}")
 
 async def _process_event_response(engine_obj, msg: dict):
     event_obj = msg.get("event")
