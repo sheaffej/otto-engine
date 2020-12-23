@@ -34,8 +34,9 @@ echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
 echo "Running Integration Tests"
 echo "~~~~~~~~~~~~~~~~~~~~~~~~~"
 # Create the otto-engine server
+# config.ini will be created by config.py automatically
 docker rm -f $CONTAINER_NAME || echo
-docker run -d --name $CONTAINER_NAME -v $MYDIR/../config.ini:/config/config.ini $IMAGE_NAME /app/run_otto.py test
+docker run -d --name $CONTAINER_NAME $IMAGE_NAME /app/run_otto.py test
 sleep 1
 
 # Run the integration tests against the server
