@@ -50,7 +50,10 @@ class OttoEngineState(object):
 
     def get_entity_state(self, entity_id):
         '''Sets an entity state'''
-        return self._entity_states.get(entity_id)
+        state = self._entity_states.get(entity_id)
+        if state is None:
+            _LOG.warn(f"STATE: entity {entity_id} is not in _entity_states")
+        return state
 
     def get_all_entity_state_copy(self):
         return copy.deepcopy(self._entity_states)

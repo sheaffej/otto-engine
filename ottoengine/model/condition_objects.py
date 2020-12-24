@@ -104,8 +104,8 @@ class NumericStateCondition(RuleCondition):
     def __init__(self, entity_id, above_value=None, below_value=None):
         super().__init__("numeric_state")
         self._entity_id = entity_id             # string
-        self._above_value = None                # numeric
-        self._below_value = None                # numeric
+        self._above_value = above_value         # numeric
+        self._below_value = below_value         # numeric
 
         # Check that above_value & below_value are numbers
         if above_value is not None:
@@ -124,7 +124,7 @@ class NumericStateCondition(RuleCondition):
             except Exception:
                 raise helpers.ValidationError("below_value is not a number")
 
-        if not (self._above_value or self._below_value):
+        if (self._above_value is None and self._below_value is None):
             raise helpers.ValidationError(
                 "NumericStateCondition: either above_value or below_value must be specified "
                 + "({})".format(self._entity_id)
@@ -145,9 +145,9 @@ class NumericStateCondition(RuleCondition):
             ATTR_CONDITION: self._condition,
             ATTR_ENTITY_ID: self._entity_id
         }
-        if self._above_value:
+        if self._above_value is not None:
             d["above_value"] = self._above_value
-        if self._below_value:
+        if self._below_value is not None:
             d["below_value"] = self._below_value
         return d
 

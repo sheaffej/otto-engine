@@ -5,15 +5,14 @@ services:
   - docker
 
 install:
-  - docker build -t otto-engine .
+  - ./docker_build.sh
 
 script: 
-  - docker run --rm -e TRAVIS_JOB_ID -e TRAVIS_BRANCH -e COVERALLS_REPO_TOKEN otto-engine bash -c "pytest -v --cov=ottoengine /app/tests/unit; coveralls"
-  - docker run -d --name otto-engine otto-engine /app/run_otto.py test
-  - sleep 1
-  - docker exec -it otto-engine pytest -v /app/tests/integration
-  - docker stop otto-engine
-      
+  - ./scripts/run_dev_tests.sh
+  # - docker run -d --name otto-engine otto-engine /app/run_otto.py test
+  # - sleep 1
+  # - docker exec -it otto-engine pytest -v /app/tests/integration
+  # - docker stop otto-engine      
 
 after_script:
   - docker logs otto-engine
