@@ -5,7 +5,7 @@ services:
         image: sheaffej/otto-engine
         container_name: otto-engine
         volumes:
-            - ./config.ini:/config/config.ini:ro
+            - /data/otto-engine/config.ini:/config/config.ini:ro
             - /data/otto-rules:/app/json_rules
             - .:/app
         restart: always
