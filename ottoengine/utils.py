@@ -5,7 +5,7 @@ import sys
 
 def setup_logging(log_level):
     logging.basicConfig(level=log_level)
-    fmt = ("%(levelname)s [%(name)s - %(funcName)s()] %(message)s")
+    fmt = ("%(asctime)s %(levelname)s [%(name)s.%(funcName)s()] %(message)s")
     colorfmt = "%(log_color)s{}%(reset)s".format(fmt)
 
     # Suppress overly verbose logs from libraries that aren't helpful
