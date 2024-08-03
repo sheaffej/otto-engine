@@ -5,7 +5,7 @@ metadata:
 spec:
   externalTrafficPolicy: Local
   type: LoadBalancer
-  loadBalancerIP: 192.168.1.248
+  loadBalancerIP: 172.16.10.248
   selector:
     app: otto-engine
   ports:
